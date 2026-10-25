@@ -2,7 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
-import { locales, ui, type Locale, type SeasonKey } from '../../i18n/ui';
+import Icon from '../../components/Icon.astro';
+import { locales, ui, type Locale, type ProductKey, type SeasonKey } from '../../i18n/ui';
 
 export function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang } }));
@@ -11,11 +12,12 @@ export function getStaticPaths() {
 const lang = Astro.params.lang as Locale;
 const t = ui[lang];
 
-const seasons: { key: SeasonKey; accent: string; tint: string }[] = [
-  { key: 'spring', accent: 'var(--color-blush)', tint: 'rgb(232 183 190 / 0.22)' },
-  { key: 'summer', accent: 'var(--color-butter)', tint: 'rgb(238 215 139 / 0.22)' },
-  { key: 'autumn', accent: 'var(--color-copper)', tint: 'rgb(185 105 63 / 0.14)' },
-  { key: 'winter', accent: 'var(--color-mist)', tint: 'rgb(184 206 218 / 0.28)' },
+// Layout and imagery follow design/reference/00-selected-direction.png and 01-home-seasons.png.
+const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
+const products: { key: ProductKey; image: string; width: number; height: number }[] = [
+  { key: 'meadowDress', image: 'product-meadow-dress', width: 279, height: 221 },
+  { key: 'forestCardigan', image: 'product-forest-cardigan', width: 273, height: 221 },
+  { key: 'willowBlouse', image: 'product-willow-blouse', width: 232, height: 160 },
 ];
 ---
 
@@ -23,44 +25,32 @@ const seasons: { key: SeasonKey; accent: string; tint: string }[] = [
   <a class="skip-link" href="#main">{t.skipLink}</a>
   <SiteHeader lang={lang} />
 
-  <main id="main">
+  <main id="main" class="container">
     <section class="hero">
-      <div class="container hero__inner">
-        <div class="hero__text">
-          <h1>{t.heroTitle}</h1>
-          <span class="hero__star" aria-hidden="true">✦</span>
-          <p class="hero__lead">{t.heroLead}</p>
-        </div>
-        <img
-          class="hero__art"
-          src="/brand/woodland-four-seasons-banner.webp"
-          alt=""
-          width="696"
-          height="255"
-          fetchpriority="high"
-        />
+      <picture class="hero__art">
+        <source media="(max-width: 899px)" srcset="/images/home/hero-woodland-tall.webp" width="440" height="550" />
+        <img src="/images/home/hero-woodland.webp" alt="" width="517" height="310" fetchpriority="high" />
+      </picture>
+      <div class="hero__text">
+        <h1>{t.heroTitle}</h1>
+        <div class="hero__divider" aria-hidden="true"><span>✦</span></div>
+        <p>{t.heroLead}</p>
+        <a class="button" href="#collection">
+          {t.heroCta}
+          <Icon name="arrow" size={20} />
+        </a>
       </div>
     </section>
 
-    <section class="container status" aria-labelledby="status-title">
-      <h2 id="status-title">{t.statusTitle}</h2>
-      <p>{t.statusBody}</p>
-    </section>
-
-    <section class="container seasons" aria-labelledby="seasons-title">
-      <header class="section-head">
-        <h2 id="seasons-title">{t.seasonsTitle}</h2>
-        <p>{t.seasonsLead}</p>
-      </header>
-      <ul class="seasons__grid">
+    <section id="seasons" class="seasons" aria-label={t.seasonsTitle}>
+      <ul>
         {
-          seasons.map(({ key, accent, tint }) => (
-            <li class="season" data-season={key} style={`--season-accent: ${accent}; --season-tint: ${tint};`}>
-              <h3>{t.seasons[key].name}</h3>
-              <p class="season__months">{t.seasons[key].months}</p>
-              <p class="season__note">{t.seasons[key].note}</p>
-              <span class="season__badge" hidden>
-                {t.currentSeason}
+          seasons.map((s) => (
+            <li class="season-card" style={`--tint: var(--tint-${s});`}>
+              <img src={`/images/home/season-${s}.webp`} alt="" width="105" height="83" loading="lazy" />
+              <span class="season-card__label">
+                {t.seasons[s]}
+                <Icon name="arrow" size={16} />
               </span>
             </li>
           ))
@@ -68,113 +58,204 @@ const seasons: { key: SeasonKey; accent: string; tint: string }[] = [
       </ul>
     </section>
 
-    <section class="container contact" aria-labelledby="contact-title">
-      <h2 id="contact-title">{t.contactTitle}</h2>
-      <p>
-        {t.contactBody} <a href="mailto:info@pipolune.com">info@pipolune.com</a>
-      </p>
+    <section id="collection" class="collection" aria-labelledby="collection-title">
+      <h2 id="collection-title" class="visually-hidden">{t.collectionTitle}</h2>
+      <ul>
+        {
+          products.map((p) => (
+            <li class="product-card">
+              <div class="product-card__photo">
+                <img src={`/images/home/${p.image}.webp`} alt={t.products[p.key].name} width={p.width} height={p.height} loading="lazy" />
+              </div>
+              <div class="product-card__body">
+                <span class="product-card__arrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
+                <div>
+                  <h3>{t.products[p.key].name}</h3>
+                  <p>{t.products[p.key].detail}</p>
+                </div>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="preview-note"><span aria-hidden="true">✦</span> {t.previewNote} <span aria-hidden="true">✦</span></p>
+    </section>
+
+    <section id="about" class="about" aria-labelledby="about-title">
+      <h2 id="about-title">{t.aboutTitle}</h2>
+      <p>{t.aboutBody}</p>
+      <p>{t.statusBody}</p>
+      <p>{t.contactBody} <a href="mailto:info@pipolune.com">info@pipolune.com</a></p>
     </section>
   </main>
 
   <SiteFooter lang={lang} />
 </BaseLayout>
 
-<script>
-  // Seasons follow the Europe/Istanbul calendar, not the visitor's local time zone.
-  const month = Number(
-    new Intl.DateTimeFormat('en', { timeZone: 'Europe/Istanbul', month: 'numeric' }).format(new Date()),
-  );
-  const current =
-    month >= 3 && month <= 5 ? 'spring' : month >= 6 && month <= 8 ? 'summer' : month >= 9 && month <= 11 ? 'autumn' : 'winter';
-  const card = document.querySelector<HTMLElement>(`.season[data-season="${current}"]`);
-  if (card) {
-    card.classList.add('is-current');
-    card.querySelector<HTMLElement>('.season__badge')?.removeAttribute('hidden');
-  }
-</script>
-
 <style>
+  /* ---------- Hero ---------- */
   .hero {
-    padding-block: var(--space-7) var(--space-6);
+    display: grid;
+    margin-top: var(--space-4);
   }
 
-  .hero__inner {
-    display: grid;
-    gap: var(--space-6);
-    align-items: center;
+  .hero__art img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: 50% 30%;
+  }
+
+  .hero__text {
+    padding: var(--space-5) 0 var(--space-6);
   }
 
   .hero h1 {
-    font-size: clamp(2.25rem, 6vw, 4.25rem);
+    font-size: clamp(2.25rem, 9vw, 3rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
   }
 
-  .hero__art {
-    order: -1;
-  }
-
-  .hero__star {
-    display: block;
-    margin-block: var(--space-4);
+  .hero__divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    max-width: 300px;
+    margin: var(--space-4) 0;
     font-size: 0.875rem;
   }
 
-  .hero__lead {
-    max-width: 38ch;
-    font-size: 1.0625rem;
-    color: var(--color-text-muted);
+  .hero__divider::before,
+  .hero__divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-forest);
+    opacity: 0.6;
   }
 
-  .hero__art {
-    width: 100%;
-    mask-image: radial-gradient(ellipse 75% 85% at 55% 50%, #000 60%, transparent 100%);
+  .hero__text p {
+    max-width: 34ch;
+    font-size: 1.125rem;
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-height: 48px;
+    margin-top: var(--space-5);
+    padding: 0 var(--space-5);
+    font-size: 1.0625rem;
+    color: var(--color-milk);
+    background: var(--color-forest);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+  }
+
+  .button:hover {
+    background: #1b3119;
   }
 
   @media (min-width: 900px) {
-    .hero__inner {
-      grid-template-columns: 5fr 7fr;
-    }
-
-    .hero h1 {
-      max-width: 12ch;
+    .hero {
+      position: relative;
+      min-height: clamp(420px, 38vw, 520px);
+      margin-top: 0;
+      overflow: hidden;
     }
 
     .hero__art {
-      order: 0;
+      position: absolute;
+      inset: 0 0 0 auto;
+      width: 68%;
+    }
+
+    .hero__art img {
+      height: 100%;
+      aspect-ratio: auto;
+      object-position: 50% 50%;
+      mask-image: linear-gradient(to right, transparent 0%, #000 22%);
+    }
+
+    .hero__text {
+      position: relative;
+      align-self: center;
+      max-width: 520px;
+      padding: var(--space-7) 0;
+    }
+
+    .hero h1 {
+      font-size: clamp(3rem, 4.6vw, 4.25rem);
+      max-width: 14ch;
     }
   }
 
-  .status {
+  /* ---------- Season cards ---------- */
+  .seasons ul {
     display: grid;
-    gap: var(--space-3);
-    margin-top: var(--space-6);
-    padding-block: var(--space-6);
-    border-block: 1px solid var(--color-line);
-  }
-
-  .status h2,
-  .contact h2 {
-    font-size: clamp(1.75rem, 3.5vw, 2.25rem);
-  }
-
-  .status p {
-    max-width: 62ch;
-  }
-
-  .section-head {
-    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-2);
-    margin-block: var(--space-8) var(--space-5);
+    list-style: none;
+    margin: 0;
+    padding: 0;
   }
 
-  .section-head h2 {
-    font-size: clamp(2rem, 4vw, 2.75rem);
+  .season-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: var(--space-3);
+    background: var(--tint);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    text-align: center;
   }
 
-  .section-head p {
-    color: var(--color-text-muted);
+  .season-card img {
+    height: 64px;
+    width: auto;
   }
 
-  .seasons__grid {
+  .season-card__label {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.9375rem;
+  }
+
+  @media (min-width: 900px) {
+    .seasons ul {
+      gap: var(--space-4);
+    }
+
+    .season-card {
+      flex-direction: row;
+      min-height: 96px;
+      padding-bottom: 0;
+      gap: var(--space-5);
+      text-align: left;
+    }
+
+    .season-card__label {
+      flex-direction: row;
+      gap: var(--space-3);
+      font-size: 1.125rem;
+    }
+
+    .season-card img {
+      height: 96px;
+    }
+  }
+
+  /* ---------- Product cards ---------- */
+  .collection {
+    margin-top: var(--space-5);
+  }
+
+  .collection ul {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-3);
@@ -183,62 +264,87 @@ const seasons: { key: SeasonKey; accent: string; tint: string }[] = [
     padding: 0;
   }
 
-  @media (min-width: 900px) {
-    .seasons__grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: var(--space-4);
-    }
-  }
-
-  .season {
-    position: relative;
-    display: grid;
-    gap: var(--space-1);
-    padding: var(--space-5) var(--space-4);
-    background: var(--season-tint);
+  .product-card {
     border: 1px solid var(--color-line);
-    border-top: 3px solid var(--season-accent);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--color-surface);
   }
 
-  .season h3 {
-    font-size: 1.75rem;
+  .product-card__photo {
+    background: var(--color-photo);
   }
 
-  .season__months {
-    font-size: 0.875rem;
+  .product-card__photo img {
+    width: 100%;
+    aspect-ratio: 5 / 4;
+    object-fit: cover;
+  }
+
+  .product-card__body {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+
+  .product-card h3 {
+    font-family: var(--font-text);
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+
+  .product-card p {
+    font-size: 0.9375rem;
     color: var(--color-text-muted);
   }
 
-  .season__note {
-    margin-top: var(--space-2);
+  .product-card__arrow {
+    display: none;
   }
 
-  .season.is-current {
-    border-color: var(--color-forest);
-    border-top-color: var(--season-accent);
+  .preview-note {
+    margin-top: var(--space-5);
+    font-size: 0.875rem;
+    text-align: center;
+    color: var(--color-text-muted);
   }
 
-  .season__badge {
-    position: absolute;
-    top: var(--space-3);
-    right: var(--space-3);
-    padding: 2px var(--space-2);
-    font-size: 0.75rem;
-    letter-spacing: 0.04em;
-    color: var(--color-milk);
-    background: var(--color-forest);
-    border-radius: 999px;
+  @media (min-width: 900px) {
+    .collection ul {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+
+    .product-card__arrow {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: 2px;
+      border: 1px solid var(--color-forest);
+      border-radius: 50%;
+    }
   }
 
-  .contact {
+  /* ---------- About ---------- */
+  .about {
     display: grid;
     gap: var(--space-3);
-    margin-top: var(--space-8);
+    max-width: 62ch;
+    margin: var(--space-8) auto 0;
+    text-align: center;
   }
 
-  .contact a {
-    font-weight: 600;
+  .about h2 {
+    font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+    font-weight: 500;
+  }
+
+  .about a {
+    font-weight: 500;
     text-underline-offset: 4px;
   }
 </style>

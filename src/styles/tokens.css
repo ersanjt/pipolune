@@ -1,4 +1,4 @@
-/* Brand tokens from docs/brand/approved-style-v1.1.ru.md (section 4) and docs/uiux/uiux-foundation-v1.ru.md (section 03). */
+/* Brand tokens from docs/brand/approved-style-v1.1.ru.md (section 4); card tints sampled from design/reference/00. */
 :root {
   --color-milk: #f7f2e8;
   --color-forest: #203d2b;
@@ -12,12 +12,18 @@
   --color-pine: #365a55;
   --color-plum: #593249;
 
+  --tint-spring: #faeae3;
+  --tint-summer: #f0eedc;
+  --tint-autumn: #fbebd4;
+  --tint-winter: #e7e9ea;
+  --color-photo: #e8ddd0;
+
   --color-surface: #fbf8f1;
   --color-line: rgb(32 61 43 / 0.14);
   --color-text-muted: rgb(32 61 43 / 0.72);
 
   --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
-  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-text: 'EB Garamond', Georgia, 'Times New Roman', serif;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -31,7 +37,7 @@
 
   --content-max: 1280px;
   --gutter: clamp(16px, 4vw, 48px);
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
   --control-height: 44px;
 }

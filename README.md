@@ -43,7 +43,11 @@ src/               website source (Astro)
 .github/workflows/ build + deploy to the cPanel server
 ```
 
-`public/brand/wordmark.svg`, the favicons and `og-image.jpg` are traced from the concept board (`scripts/brand-assets.py`). They are placeholders until the final hand-drawn vector logo exists.
+The homepage reproduces boards 00/01 (desktop) and 03 (mobile). All imagery is cut from those boards by `scripts/brand-assets.py`, not redrawn:
+
+- `public/brand/wordmark.svg` — vector trace of the board 00 lettering (provisional until the final hand-drawn vector exists).
+- `public/favicon.ico`, `favicon-96.png`, `apple-touch-icon.png`, `brand/icon-*.png` — the four-season woodland from board 03 (winter upper left, spring upper right, autumn lower left, summer lower right).
+- `public/images/home/` — hero woodland, season sprigs, product photos. Products are illustrative; prices and material claims from the boards are intentionally not shown.
 
 ## Development
 

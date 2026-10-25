@@ -1,0 +1,28 @@
+---
+interface Props {
+  name: 'search' | 'account' | 'bag' | 'menu' | 'close' | 'arrow';
+  size?: number;
+}
+
+const { name, size = 22 } = Astro.props;
+---
+
+<svg
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.4"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  {name === 'search' && (<><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 20 20" /></>)}
+  {name === 'account' && (<><circle cx="12" cy="8" r="4" /><path d="M4.5 20.5c1.2-3.6 4-5.5 7.5-5.5s6.3 1.9 7.5 5.5" /></>)}
+  {name === 'bag' && (<><path d="M5 8h14l-1 12.5H6L5 8Z" /><path d="M9 10V6.5a3 3 0 0 1 6 0V10" /></>)}
+  {name === 'menu' && (<><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>)}
+  {name === 'close' && (<><path d="M6 6l12 12" /><path d="M18 6 6 18" /></>)}
+  {name === 'arrow' && (<><path d="M4 12h15" /><path d="M14 7l5 5-5 5" /></>)}
+</svg>

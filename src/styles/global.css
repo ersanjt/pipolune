@@ -14,9 +14,9 @@ body {
   margin: 0;
   background: var(--color-milk);
   color: var(--color-forest);
-  font-family: var(--font-ui);
-  font-size: 1rem;
-  line-height: 1.6;
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  line-height: 1.55;
 }
 
 img {

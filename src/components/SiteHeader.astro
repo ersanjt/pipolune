@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 import { locales, localeNames, ui, type Locale } from '../i18n/ui';
 
 interface Props {
@@ -8,15 +9,34 @@ interface Props {
 
 const { lang, path = '' } = Astro.props;
 const t = ui[lang];
+const home = `/${lang}/`;
+const navItems = [
+  { href: `${home}#collection`, label: t.nav.shop },
+  { href: `${home}#seasons`, label: t.nav.seasons },
+  { href: `${home}#about`, label: t.nav.about },
+];
 ---
 
-<header class="site-header">
-  <div class="container site-header__inner">
-    <a class="site-header__logo" href={`/${lang}/`} aria-label="Pipolune">
+<header class="site-header" data-menu-open="false">
+  <div class="container site-header__bar">
+    <button class="icon-btn site-header__menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="icon-open"><Icon name="menu" /></span>
+      <span class="icon-close"><Icon name="close" /></span>
+      <span class="visually-hidden">{t.menu}</span>
+    </button>
+
+    <a class="site-header__logo" href={home}>
       <img src="/brand/wordmark.svg" alt="Pipolune" width="723" height="204" />
     </a>
-    <nav class="lang-switch" aria-label={t.languageLabel}>
+
+    <nav id="site-nav" class="site-nav" aria-label={t.menu}>
       <ul>
+        {navItems.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="site-header__tools">
+      <ul class="lang-switch" aria-label={t.languageLabel}>
         {
           locales.map((l) => (
             <li>
@@ -34,11 +54,35 @@ const t = ui[lang];
           ))
         }
       </ul>
-    </nav>
+      <span class="icon-btn icon-btn--soon hide-mobile" role="img" aria-label={`${t.search} — ${t.comingSoon}`} title={`${t.search} — ${t.comingSoon}`}>
+        <Icon name="search" />
+      </span>
+      <span class="icon-btn icon-btn--soon hide-mobile" role="img" aria-label={`${t.account} — ${t.comingSoon}`} title={`${t.account} — ${t.comingSoon}`}>
+        <Icon name="account" />
+      </span>
+      <span class="icon-btn icon-btn--soon" role="img" aria-label={`${t.bag} — ${t.comingSoon}`} title={`${t.bag} — ${t.comingSoon}`}>
+        <Icon name="bag" />
+      </span>
+    </div>
   </div>
 </header>
 
 <script>
+  const header = document.querySelector<HTMLElement>('.site-header');
+  const button = header?.querySelector<HTMLButtonElement>('.site-header__menu-btn');
+  const setOpen = (open: boolean) => {
+    header?.setAttribute('data-menu-open', String(open));
+    button?.setAttribute('aria-expanded', String(open));
+  };
+  button?.addEventListener('click', () => setOpen(header?.dataset.menuOpen !== 'true'));
+  header?.querySelectorAll('.site-nav a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && header?.dataset.menuOpen === 'true') {
+      setOpen(false);
+      button?.focus();
+    }
+  });
+
   document.querySelectorAll<HTMLAnchorElement>('.lang-switch a[data-lang]').forEach((link) => {
     link.addEventListener('click', () => {
       try {
@@ -52,26 +96,93 @@ const t = ui[lang];
 
 <style>
   .site-header {
+    position: relative;
+    background: var(--color-milk);
     border-bottom: 1px solid var(--color-line);
+    z-index: 5;
   }
 
-  .site-header__inner {
-    display: flex;
+  .site-header__bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-4);
-    min-height: 72px;
+    gap: var(--space-3);
+    min-height: 64px;
+  }
+
+  .site-header__logo {
+    justify-self: center;
   }
 
   .site-header__logo img {
-    width: clamp(120px, 22vw, 168px);
+    width: 132px;
   }
 
-  .lang-switch ul {
-    display: flex;
-    gap: var(--space-1);
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-height);
+    height: var(--control-height);
+    padding: 0;
+    color: var(--color-forest);
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .icon-btn--soon {
+    cursor: default;
+  }
+
+  .icon-close,
+  .site-header[data-menu-open='true'] .icon-open {
+    display: none;
+  }
+
+  .site-header[data-menu-open='true'] .icon-close {
+    display: inline-flex;
+  }
+
+  .site-nav {
+    display: none;
+  }
+
+  .site-header[data-menu-open='true'] .site-nav {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: var(--space-3) var(--gutter) var(--space-5);
+    background: var(--color-milk);
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .site-nav ul {
     list-style: none;
     margin: 0;
+    padding: 0;
+  }
+
+  .site-nav a {
+    display: flex;
+    align-items: center;
+    min-height: var(--control-height);
+    font-size: 1.125rem;
+    text-decoration: none;
+  }
+
+  .site-header__tools {
+    display: flex;
+    align-items: center;
+  }
+
+  .lang-switch {
+    display: flex;
+    list-style: none;
+    margin: 0 var(--space-1) 0 0;
     padding: 0;
   }
 
@@ -79,23 +190,81 @@ const t = ui[lang];
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: var(--control-height);
+    min-width: 30px;
     min-height: var(--control-height);
-    font-size: 0.8125rem;
-    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
     text-decoration: none;
     color: var(--color-text-muted);
-    border-radius: var(--radius-sm);
   }
 
-  .lang-switch a:hover {
+  .lang-switch a:hover,
+  .lang-switch a[aria-current='true'] {
     color: var(--color-forest);
   }
 
   .lang-switch a[aria-current='true'] {
-    color: var(--color-forest);
-    font-weight: 600;
+    font-weight: 500;
     text-decoration: underline;
-    text-underline-offset: 6px;
+    text-underline-offset: 5px;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
+
+  @media (min-width: 900px) {
+    .site-header__bar {
+      grid-template-columns: auto 1fr auto;
+      min-height: 80px;
+      gap: var(--space-7);
+    }
+
+    .site-header__menu-btn {
+      display: none;
+    }
+
+    .site-header__logo {
+      justify-self: start;
+    }
+
+    .site-header__logo img {
+      width: 168px;
+    }
+
+    .site-nav,
+    .site-header[data-menu-open='true'] .site-nav {
+      display: block;
+      position: static;
+      padding: 0;
+      border: 0;
+    }
+
+    .site-nav ul {
+      display: flex;
+      gap: var(--space-6);
+    }
+
+    .site-nav a {
+      font-size: 1.0625rem;
+    }
+
+    .site-nav a:hover {
+      text-decoration: underline;
+      text-underline-offset: 6px;
+    }
+
+    .site-header__tools {
+      gap: var(--space-2);
+    }
+
+    .lang-switch {
+      margin-right: var(--space-5);
+      gap: var(--space-2);
+    }
+
+    .hide-mobile {
+      display: inline-flex;
+    }
   }
 </style>

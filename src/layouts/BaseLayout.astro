@@ -1,6 +1,8 @@
 ---
 import '@fontsource/cormorant-garamond/500.css';
 import '@fontsource/cormorant-garamond/600.css';
+import '@fontsource/eb-garamond/400.css';
+import '@fontsource/eb-garamond/500.css';
 import '../styles/global.css';
 import { locales, type Locale } from '../i18n/ui';
 
@@ -30,8 +32,8 @@ const canonical = new URL(`/${lang}/${path}`, site).href;
     {locales.map((l) => <link rel="alternate" hreflang={l} href={new URL(`/${l}/${path}`, site).href} />)}
     <link rel="alternate" hreflang="x-default" href={new URL('/', site).href} />
     <meta name="theme-color" content="#F7F2E8" />
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon-96.png" type="image/png" sizes="96x96" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta property="og:site_name" content="Pipolune" />

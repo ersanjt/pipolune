@@ -11,24 +11,38 @@ const year = new Date().getFullYear();
 
 <footer class="site-footer">
   <div class="container site-footer__inner">
-    <p>© {year} Pipolune</p>
-    <p>{t.footerNote}</p>
+    <img src="/brand/wordmark.svg" alt="Pipolune" width="723" height="204" loading="lazy" />
+    <p>© {year} Pipolune · <a href="mailto:info@pipolune.com">info@pipolune.com</a></p>
+    <p class="site-footer__note">{t.previewNote}</p>
   </div>
 </footer>
 
 <style>
   .site-footer {
     border-top: 1px solid var(--color-line);
-    margin-top: var(--space-9);
-    font-size: 0.875rem;
+    margin-top: var(--space-8);
+    font-size: 0.9375rem;
     color: var(--color-text-muted);
   }
 
   .site-footer__inner {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--space-2) var(--space-5);
-    padding-block: var(--space-6);
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    padding-block: var(--space-7);
+    text-align: center;
+  }
+
+  .site-footer img {
+    width: 120px;
+    margin-bottom: var(--space-2);
+  }
+
+  .site-footer a {
+    color: inherit;
+  }
+
+  .site-footer__note {
+    font-size: 0.8125rem;
   }
 </style>
