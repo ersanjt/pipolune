@@ -1,0 +1,107 @@
+---
+import Icon from './Icon.astro';
+import { money } from '../lib/format';
+import { text, type CatalogProduct } from '../lib/catalog';
+import type { Locale } from '../i18n/ui';
+
+interface Props {
+  product: CatalogProduct;
+  lang: Locale;
+  showPrice?: boolean;
+}
+
+const { product, lang, showPrice = true } = Astro.props;
+const copy = text(product, lang);
+---
+
+<li class="product-card" data-season={product.season} data-category={product.category}>
+  <a href={`/${lang}/shop/${product.slug}/`}>
+    <div class="product-card__photo">
+      <img src={product.image} alt={copy.name} width="279" height="221" loading="lazy" />
+    </div>
+    <div class="product-card__body">
+      <div>
+        <h3>{copy.name}</h3>
+        <p>{copy.subtitle}</p>
+        {showPrice && <p class="product-card__price">{money(product.price, lang)}</p>}
+      </div>
+      <span class="product-card__arrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
+    </div>
+  </a>
+</li>
+
+<style>
+  .product-card {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+
+  .product-card[hidden] {
+    display: none;
+  }
+
+  .product-card a {
+    display: block;
+    height: 100%;
+    text-decoration: none;
+  }
+
+  .product-card__photo {
+    background: var(--color-photo);
+  }
+
+  .product-card__photo img {
+    width: 100%;
+    aspect-ratio: 5 / 4;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .product-card a:hover img {
+    transform: scale(1.03);
+  }
+
+  .product-card__body {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+
+  .product-card h3 {
+    font-family: var(--font-text);
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+
+  .product-card p {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+  }
+
+  .product-card .product-card__price {
+    margin-top: var(--space-2);
+    color: var(--color-forest);
+  }
+
+  .product-card__arrow {
+    display: none;
+  }
+
+  @media (min-width: 900px) {
+    .product-card__arrow {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: 2px;
+      border: 1px solid var(--color-forest);
+      border-radius: 50%;
+    }
+  }
+</style>

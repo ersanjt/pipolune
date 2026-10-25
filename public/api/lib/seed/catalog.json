@@ -1,0 +1,62 @@
+{
+  "_note": "Initial catalogue (illustrative products from design/reference/00). Loaded once into an empty database by bin/migrate.php; afterwards products are managed in Studio. Prices in kuruş.",
+  "products": [
+    {
+      "slug": "meadow-dress",
+      "season": "spring",
+      "category": "dress",
+      "gender": "girl",
+      "age_band": "1-4y",
+      "price_kurus": 129000,
+      "image": "/images/home/product-meadow-dress.webp",
+      "translations": {
+        "en": { "name": "Meadow Dress", "subtitle": "Dress in blossom", "description": "A soft everyday dress with a small blossom print and gathered sleeves." },
+        "tr": { "name": "Meadow Dress", "subtitle": "Çiçek desenli elbise", "description": "Küçük çiçek desenli, büzgülü kollu yumuşak bir günlük elbise." },
+        "ru": { "name": "Meadow Dress", "subtitle": "Платье в цветочек", "description": "Мягкое повседневное платье с мелким цветочным принтом и рукавами на сборке." }
+      },
+      "variants": [
+        { "sku": "PL-MDW-BLS-1-2", "colour": "Blossom", "size": "1–2Y", "stock": 4 },
+        { "sku": "PL-MDW-BLS-2-3", "colour": "Blossom", "size": "2–3Y", "stock": 4 },
+        { "sku": "PL-MDW-BLS-3-4", "colour": "Blossom", "size": "3–4Y", "stock": 2 }
+      ]
+    },
+    {
+      "slug": "forest-cardigan",
+      "season": "autumn",
+      "category": "cardigan",
+      "gender": "unisex",
+      "age_band": "1-5y",
+      "price_kurus": 119000,
+      "image": "/images/home/product-forest-cardigan.webp",
+      "translations": {
+        "en": { "name": "Forest Cardigan", "subtitle": "Knit cardigan in sage", "description": "A chunky knit cardigan in sage green with wooden-look buttons." },
+        "tr": { "name": "Forest Cardigan", "subtitle": "Adaçayı yeşili örgü hırka", "description": "Adaçayı yeşili, ahşap görünümlü düğmeli kalın örgü hırka." },
+        "ru": { "name": "Forest Cardigan", "subtitle": "Вязаный кардиган, шалфейный", "description": "Объёмный вязаный кардиган шалфейного цвета с пуговицами под дерево." }
+      },
+      "variants": [
+        { "sku": "PL-FRC-SGE-1-2", "colour": "Sage", "size": "1–2Y", "stock": 3 },
+        { "sku": "PL-FRC-SGE-2-3", "colour": "Sage", "size": "2–3Y", "stock": 5 },
+        { "sku": "PL-FRC-SGE-4-5", "colour": "Sage", "size": "4–5Y", "stock": 3 }
+      ]
+    },
+    {
+      "slug": "willow-blouse",
+      "season": "summer",
+      "category": "blouse",
+      "gender": "girl",
+      "age_band": "1-4y",
+      "price_kurus": 99000,
+      "image": "/images/home/product-willow-blouse.webp",
+      "translations": {
+        "en": { "name": "Willow Blouse", "subtitle": "Blouse in blush", "description": "A light blouse in blush pink with frilled shoulders." },
+        "tr": { "name": "Willow Blouse", "subtitle": "Pudra pembe bluz", "description": "Omuzları fırfırlı, pudra pembe hafif bir bluz." },
+        "ru": { "name": "Willow Blouse", "subtitle": "Блуза, нежно-розовая", "description": "Лёгкая нежно-розовая блуза с оборками на плечах." }
+      },
+      "variants": [
+        { "sku": "PL-WLB-BSH-1-2", "colour": "Blush", "size": "1–2Y", "stock": 4 },
+        { "sku": "PL-WLB-BSH-2-3", "colour": "Blush", "size": "2–3Y", "stock": 4 },
+        { "sku": "PL-WLB-BSH-3-4", "colour": "Blush", "size": "3–4Y", "stock": 4 }
+      ]
+    }
+  ]
+}

@@ -1,2 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /studio/
+Disallow: /*/account/
+Disallow: /*/bag/
+Disallow: /*/checkout/
+Disallow: /*/order/
+
+Sitemap: https://pipolune.com/sitemap.xml

@@ -9,7 +9,6 @@ export const localeNames: Record<Locale, string> = {
 };
 
 export type SeasonKey = 'spring' | 'summer' | 'autumn' | 'winter';
-export type ProductKey = 'meadowDress' | 'forestCardigan' | 'willowBlouse';
 
 interface Dictionary {
   metaTitle: string;
@@ -29,11 +28,11 @@ interface Dictionary {
   seasonsTitle: string;
   seasons: Record<SeasonKey, string>;
   collectionTitle: string;
-  products: Record<ProductKey, { name: string; detail: string }>;
   previewNote: string;
   aboutTitle: string;
   aboutBody: string;
   statusBody: string;
+  statusOpenBody: string;
   contactBody: string;
   notFoundTitle: string;
   notFoundBody: string;
@@ -60,17 +59,14 @@ export const ui: Record<Locale, Dictionary> = {
     seasonsTitle: 'Seasons',
     seasons: { spring: 'Spring', summer: 'Summer', autumn: 'Autumn', winter: 'Winter' },
     collectionTitle: 'Collection',
-    products: {
-      meadowDress: { name: 'Meadow Dress', detail: 'Dress in blossom' },
-      forestCardigan: { name: 'Forest Cardigan', detail: 'Knit cardigan in sage' },
-      willowBlouse: { name: 'Willow Blouse', detail: 'Blouse in blush' },
-    },
     previewNote: 'Design preview · illustrative products',
     aboutTitle: 'About Pipolune',
     aboutBody:
       "A children's woodland boutique for Türkiye: timeless pieces for curious little ones, changing with the four seasons.",
     statusBody:
       'Our first collection is in preparation. The online shop is not open yet, and we are not taking orders or payments.',
+    statusOpenBody:
+      'Our first collection is here. You can send an order request online; we confirm availability, delivery and payment with you by email before anything is charged.',
     contactBody: 'Write to us:',
     notFoundTitle: 'Page not found',
     notFoundBody: 'This path does not lead anywhere yet.',
@@ -95,17 +91,14 @@ export const ui: Record<Locale, Dictionary> = {
     seasonsTitle: 'Mevsimler',
     seasons: { spring: 'İlkbahar', summer: 'Yaz', autumn: 'Sonbahar', winter: 'Kış' },
     collectionTitle: 'Koleksiyon',
-    products: {
-      meadowDress: { name: 'Meadow Dress', detail: 'Çiçek desenli elbise' },
-      forestCardigan: { name: 'Forest Cardigan', detail: 'Adaçayı yeşili örgü hırka' },
-      willowBlouse: { name: 'Willow Blouse', detail: 'Pudra pembe bluz' },
-    },
     previewNote: 'Tasarım önizlemesi · örnek ürünler',
     aboutTitle: 'Pipolune hakkında',
     aboutBody:
       'Türkiye için orman temalı bir çocuk butiği: dört mevsimle değişen, meraklı küçükler için zamansız parçalar.',
     statusBody:
       'İlk koleksiyonumuz hazırlanıyor. Online mağaza henüz açılmadı; şu anda sipariş veya ödeme alınmıyor.',
+    statusOpenBody:
+      'İlk koleksiyonumuz burada. Online sipariş talebi gönderebilirsiniz; herhangi bir ödeme alınmadan önce stok, teslimat ve ödemeyi sizinle e-postayla onaylıyoruz.',
     contactBody: 'Bize yazın:',
     notFoundTitle: 'Sayfa bulunamadı',
     notFoundBody: 'Bu yol henüz bir yere çıkmıyor.',
@@ -130,17 +123,14 @@ export const ui: Record<Locale, Dictionary> = {
     seasonsTitle: 'Сезоны',
     seasons: { spring: 'Весна', summer: 'Лето', autumn: 'Осень', winter: 'Зима' },
     collectionTitle: 'Коллекция',
-    products: {
-      meadowDress: { name: 'Meadow Dress', detail: 'Платье в цветочек' },
-      forestCardigan: { name: 'Forest Cardigan', detail: 'Вязаный кардиган, шалфейный' },
-      willowBlouse: { name: 'Willow Blouse', detail: 'Блуза, нежно-розовая' },
-    },
     previewNote: 'Дизайн-превью · примеры товаров',
     aboutTitle: 'О Pipolune',
     aboutBody:
       'Детский бутик в лесной эстетике для Турции: вневременные вещи для любознательных малышей, меняющиеся вместе с четырьмя сезонами.',
     statusBody:
       'Первая коллекция готовится. Интернет-магазин ещё не открыт: заказы и оплата сейчас не принимаются.',
+    statusOpenBody:
+      'Первая коллекция уже здесь. Можно отправить запрос заказа онлайн: до любой оплаты мы подтвердим с вами наличие, доставку и оплату по email.',
     contactBody: 'Напишите нам:',
     notFoundTitle: 'Страница не найдена',
     notFoundBody: 'Эта тропинка пока никуда не ведёт.',

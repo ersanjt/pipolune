@@ -1,0 +1,64 @@
+---
+// Title strip with a small seasonal illustration on the right (design/reference/04, every shop/account screen).
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+
+const { title, subtitle } = Astro.props;
+---
+
+<section class="band">
+  <div class="band__text">
+    <h1 data-band-title>{title}</h1>
+    {subtitle && <p class="band__sub">{subtitle}</p>}
+    <slot />
+  </div>
+  <img class="band__art" src="/images/home/hero-woodland.webp" alt="" width="517" height="310" />
+</section>
+
+<style>
+  .band {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 120px;
+    margin: var(--space-4) 0 var(--space-5);
+    overflow: hidden;
+  }
+
+  .band__text {
+    position: relative;
+    z-index: 1;
+    padding: var(--space-4) 0;
+  }
+
+  .band h1 {
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    font-weight: 500;
+  }
+
+  .band__sub {
+    margin-top: var(--space-1);
+    font-size: 1.0625rem;
+    color: var(--color-text-muted);
+  }
+
+  .band__art {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: min(62%, 560px);
+    height: 100%;
+    object-fit: cover;
+    object-position: 60% 40%;
+    mask-image: linear-gradient(to right, transparent 0%, #000 40%);
+    opacity: 0.95;
+  }
+
+  @media (max-width: 599px) {
+    .band__art {
+      width: 55%;
+      opacity: 0.55;
+    }
+  }
+</style>

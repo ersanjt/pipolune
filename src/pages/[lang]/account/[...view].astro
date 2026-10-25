@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SiteHeader from '../../../components/SiteHeader.astro';
+import SiteFooter from '../../../components/SiteFooter.astro';
+import PageBand from '../../../components/PageBand.astro';
+import Account, { type AccountView } from '../../../islands/Account';
+import { locales, ui, type Locale } from '../../../i18n/ui';
+import { shop, type ShopDictionary } from '../../../i18n/shop';
+
+// One island, one URL per screen: /{lang}/account/, /{lang}/account/orders/, /{lang}/account/sign-in/ …
+export function getStaticPaths() {
+  const views: { view: AccountView; slug: string | undefined; title: (s: ShopDictionary) => string; sub?: (s: ShopDictionary) => string }[] = [
+    { view: 'overview', slug: undefined, title: (s) => s.helloNoName, sub: (s) => s.welcome },
+    { view: 'orders', slug: 'orders', title: (s) => s.orders },
+    { view: 'order', slug: 'order', title: (s) => s.orderDetails },
+    { view: 'wishlist', slug: 'wishlist', title: (s) => s.wishlist },
+    { view: 'addresses', slug: 'addresses', title: (s) => s.addresses },
+    { view: 'profile', slug: 'profile', title: (s) => s.profile },
+    { view: 'sign-in', slug: 'sign-in', title: (s) => s.signInTitle, sub: (s) => s.signInLead },
+    { view: 'create', slug: 'create', title: (s) => s.createTitle, sub: (s) => s.createLead },
+    { view: 'forgot', slug: 'forgot', title: (s) => s.forgotTitle },
+    { view: 'reset', slug: 'reset', title: (s) => s.resetTitle },
+    { view: 'verify', slug: 'verify', title: (s) => s.verifyTitle },
+  ];
+  return locales.flatMap((lang) => views.map((v) => ({ params: { lang, view: v.slug }, props: { entry: v } })));
+}
+
+const lang = Astro.params.lang as Locale;
+const { entry } = Astro.props;
+const s = shop[lang];
+const path = `account/${entry.slug ? `${entry.slug}/` : ''}`;
+const title = entry.title(s);
+---
+
+<BaseLayout lang={lang} title={`${title} — Pipolune`} description={s.createLead} path={path} noindex>
+  <a class="skip-link" href="#main">{ui[lang].skipLink}</a>
+  <SiteHeader lang={lang} path={path} />
+  <main id="main" class="container">
+    <PageBand title={title} subtitle={entry.sub?.(s)} />
+    <Account client:only="preact" lang={lang} view={entry.view} />
+  </main>
+  <SiteFooter lang={lang} />
+</BaseLayout>

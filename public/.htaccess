@@ -5,6 +5,19 @@ AddDefaultCharset UTF-8
 AddType application/manifest+json .webmanifest
 AddType image/svg+xml .svg
 
+RewriteEngine On
+# One canonical host for SEO and cookies.
+RewriteCond %{HTTP_HOST} ^www\.pipolune\.com$ [NC]
+RewriteRule ^(.*)$ https://pipolune.com/$1 [R=301,L]
+# "/" chooses the language per visitor (lang-redirect.php sends no-store so caches never share it).
+RewriteRule ^$ /lang-redirect.php [L]
+
+<FilesMatch "^lang-redirect\.php$">
+  <IfModule mod_headers.c>
+    Header always set X-Robots-Tag "noindex"
+  </IfModule>
+</FilesMatch>
+
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType text/html "access plus 0 seconds"

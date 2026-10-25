@@ -1,0 +1,131 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SiteHeader from '../../../components/SiteHeader.astro';
+import SiteFooter from '../../../components/SiteFooter.astro';
+import ProductBuy from '../../../islands/ProductBuy';
+import { locales, ui, type Locale } from '../../../i18n/ui';
+import { shop } from '../../../i18n/shop';
+import { loadCatalog, text } from '../../../lib/catalog';
+
+export async function getStaticPaths() {
+  const products = await loadCatalog();
+  return locales.flatMap((lang) => products.map((product) => ({ params: { lang, slug: product.slug }, props: { product } })));
+}
+
+const lang = Astro.params.lang as Locale;
+const { product } = Astro.props;
+const t = ui[lang];
+const s = shop[lang];
+const copy = text(product, lang);
+const path = `shop/${product.slug}/`;
+const site = Astro.site!;
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: copy.name,
+    description: copy.description || copy.subtitle,
+    image: new URL(product.image, site).href,
+    brand: { '@type': 'Brand', name: 'Pipolune' },
+    sku: product.variants[0]?.sku,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Pipolune', item: new URL(`/${lang}/`, site).href },
+      { '@type': 'ListItem', position: 2, name: s.shopTitle, item: new URL(`/${lang}/shop/`, site).href },
+      { '@type': 'ListItem', position: 3, name: copy.name, item: new URL(`/${lang}/${path}`, site).href },
+    ],
+  },
+];
+---
+
+<BaseLayout lang={lang} title={`${copy.name} — ${copy.subtitle} | Pipolune`} description={copy.description || copy.subtitle} path={path} image={product.image} jsonLd={jsonLd}>
+  <a class="skip-link" href="#main">{t.skipLink}</a>
+  <SiteHeader lang={lang} path={path} />
+  <main id="main" class="container">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={`/${lang}/shop/`}>{s.shopTitle}</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{copy.name}</span>
+    </nav>
+    <article class="product">
+      <div class="product__photo">
+        <img src={product.image} alt={copy.name} width="560" height="448" fetchpriority="high" />
+      </div>
+      <div class="product__info">
+        <h1>{copy.name}</h1>
+        <p class="product__subtitle">{copy.subtitle}</p>
+        <ProductBuy client:load lang={lang} slug={product.slug} price={product.price} variants={product.variants} />
+        {copy.description && <p class="product__description">{copy.description}</p>}
+        <p class="product__note"><span aria-hidden="true">✦</span> {t.previewNote}</p>
+      </div>
+    </article>
+  </main>
+  <SiteFooter lang={lang} />
+</BaseLayout>
+
+<style>
+  .crumbs {
+    display: flex;
+    gap: var(--space-2);
+    margin: var(--space-4) 0;
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+  }
+
+  .crumbs a {
+    text-underline-offset: 4px;
+  }
+
+  .product {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .product__photo {
+    background: var(--color-photo);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .product__photo img {
+    width: 100%;
+    aspect-ratio: 5 / 4;
+    object-fit: cover;
+  }
+
+  .product__info {
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+  }
+
+  .product h1 {
+    font-size: clamp(2.25rem, 5vw, 3rem);
+    font-weight: 500;
+  }
+
+  .product__subtitle {
+    margin-top: calc(var(--space-3) * -1);
+    font-size: 1.125rem;
+    color: var(--color-text-muted);
+  }
+
+  .product__description {
+    max-width: 52ch;
+  }
+
+  .product__note {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 900px) {
+    .product {
+      grid-template-columns: 1.15fr 1fr;
+      gap: var(--space-8);
+    }
+  }
+</style>

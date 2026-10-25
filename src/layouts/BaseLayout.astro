@@ -1,23 +1,27 @@
 ---
-import '@fontsource/cormorant-garamond/500.css';
-import '@fontsource/cormorant-garamond/600.css';
-import '@fontsource/eb-garamond/400.css';
-import '@fontsource/eb-garamond/500.css';
 import '../styles/global.css';
+import displayLatin from '../assets/fonts/pipolune-display-500-latin.woff2?url';
+import displayCyrillic from '../assets/fonts/pipolune-display-500-cyrillic.woff2?url';
+import textLatin from '../assets/fonts/pipolune-text-400-latin.woff2?url';
+import textCyrillic from '../assets/fonts/pipolune-text-400-cyrillic.woff2?url';
 import { locales, type Locale } from '../i18n/ui';
 
 interface Props {
   lang: Locale;
   title: string;
   description: string;
-  /** Path after the locale prefix, e.g. "" for home. Used for hreflang alternates. */
+  /** Path after the locale prefix, e.g. "" for home. Used for canonical and hreflang alternates. */
   path?: string;
   noindex?: boolean;
+  image?: string;
+  jsonLd?: Record<string, unknown>[];
 }
 
-const { lang, title, description, path = '', noindex = false } = Astro.props;
+const { lang, title, description, path = '', noindex = false, image = '/brand/og-image.jpg', jsonLd = [] } = Astro.props;
 const site = Astro.site ?? new URL('https://pipolune.com');
 const canonical = new URL(`/${lang}/${path}`, site).href;
+// Each language preloads only the subsets it renders (EN/TR: latin; RU: cyrillic plus latin for digits and names).
+const preload = lang === 'ru' ? [displayCyrillic, textCyrillic, textLatin] : [displayLatin, textLatin];
 ---
 
 <!doctype html>
@@ -27,10 +31,19 @@ const canonical = new URL(`/${lang}/${path}`, site).href;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex" />}
-    <link rel="canonical" href={canonical} />
-    {locales.map((l) => <link rel="alternate" hreflang={l} href={new URL(`/${l}/${path}`, site).href} />)}
-    <link rel="alternate" hreflang="x-default" href={new URL('/', site).href} />
+    {preload.map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {
+      !noindex && (
+        <>
+          <link rel="canonical" href={canonical} />
+          {locales.map((l) => (
+            <link rel="alternate" hreflang={l} href={new URL(`/${l}/${path}`, site).href} />
+          ))}
+          <link rel="alternate" hreflang="x-default" href={path ? new URL(`/en/${path}`, site).href : new URL('/', site).href} />
+        </>
+      )
+    }
     <meta name="theme-color" content="#F7F2E8" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon-96.png" type="image/png" sizes="96x96" />
@@ -42,10 +55,10 @@ const canonical = new URL(`/${lang}/${path}`, site).href;
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={{ en: 'en_US', tr: 'tr_TR', ru: 'ru_RU' }[lang]} />
-    <meta property="og:image" content={new URL('/brand/og-image.jpg', site).href} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    {locales.filter((l) => l !== lang).map((l) => <meta property="og:locale:alternate" content={{ en: 'en_US', tr: 'tr_TR', ru: 'ru_RU' }[l]} />)}
+    <meta property="og:image" content={new URL(image, site).href} />
     <meta name="twitter:card" content="summary_large_image" />
+    {jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}
   </head>
   <body>
     <slot />

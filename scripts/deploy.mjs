@@ -11,6 +11,7 @@ const { SFTP_HOST, SFTP_USER } = process.env;
 const KEY = process.env.SFTP_KEY_PATH || join(homedir(), ".ssh", "pipolune_deploy");
 const PORT = process.env.SFTP_PORT || "22";
 const REMOTE = process.env.SFTP_REMOTE || "public_html";
+const PHP = process.env.DEPLOY_PHP || "/opt/cpanel/ea-php82/root/usr/bin/php";
 const DIST = "dist";
 const ASSETS_DIR = "_astro";
 
@@ -35,11 +36,23 @@ function sftp(lines) {
   }
 }
 
+function ssh(command) {
+  return spawnSync("ssh", ["-p", PORT, ...sshOptions, `${SFTP_USER}@${SFTP_HOST}`, command], { encoding: "utf8" });
+}
+
+// Applies new SQL files in api/lib/migrations; the script tracks what already ran.
+function migrateDatabase() {
+  const res = ssh(`${PHP} ${REMOTE}/api/lib/bin/migrate.php`);
+  process.stdout.write(res.stdout);
+  if (res.status !== 0) {
+    process.stderr.write(res.stderr);
+    throw new Error(`Database migration failed (exit ${res.status}).`);
+  }
+}
+
 // cPanel's ea-nginx proxy caches pages (it kept serving an empty "Index of /" after the first upload).
 function clearServerCache() {
-  const res = spawnSync("ssh", ["-p", PORT, ...sshOptions, `${SFTP_USER}@${SFTP_HOST}`, "uapi NginxCaching clear_cache"], {
-    encoding: "utf8",
-  });
+  const res = ssh("uapi NginxCaching clear_cache");
   if (res.status === 0 && /result:[\s\S]*?status: 1|errors: ~/.test(res.stdout)) console.log("Cleared nginx cache.");
   else console.warn(`Could not clear nginx cache (exit ${res.status}): ${(res.stderr || res.stdout).trim()}`);
 }
@@ -85,6 +98,7 @@ try {
     ...files.map((f) => `chmod 644 ${f}`),
   ]);
   console.log(`Deployed ${files.length} files to ${REMOTE}.`);
+  migrateDatabase();
   clearServerCache();
 } finally {
   rmSync(work, { recursive: true, force: true });

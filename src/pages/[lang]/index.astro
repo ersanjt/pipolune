@@ -3,7 +3,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
 import Icon from '../../components/Icon.astro';
-import { locales, ui, type Locale, type ProductKey, type SeasonKey } from '../../i18n/ui';
+import ProductCard from '../../components/ProductCard.astro';
+import { locales, ui, type Locale, type SeasonKey } from '../../i18n/ui';
+import { loadCatalog } from '../../lib/catalog';
 
 export function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang } }));
@@ -11,17 +13,32 @@ export function getStaticPaths() {
 
 const lang = Astro.params.lang as Locale;
 const t = ui[lang];
+const site = Astro.site!;
 
 // Layout and imagery follow design/reference/00-selected-direction.png and 01-home-seasons.png.
 const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
-const products: { key: ProductKey; image: string; width: number; height: number }[] = [
-  { key: 'meadowDress', image: 'product-meadow-dress', width: 279, height: 221 },
-  { key: 'forestCardigan', image: 'product-forest-cardigan', width: 273, height: 221 },
-  { key: 'willowBlouse', image: 'product-willow-blouse', width: 232, height: 160 },
+const products = (await loadCatalog()).slice(0, 3);
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Pipolune',
+    url: site.href,
+    logo: new URL('/brand/icon-512.png', site).href,
+    email: 'info@pipolune.com',
+    areaServed: 'TR',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Pipolune',
+    url: new URL(`/${lang}/`, site).href,
+    inLanguage: lang,
+  },
 ];
 ---
 
-<BaseLayout lang={lang} title={t.metaTitle} description={t.metaDescription}>
+<BaseLayout lang={lang} title={t.metaTitle} description={t.metaDescription} jsonLd={jsonLd}>
   <a class="skip-link" href="#main">{t.skipLink}</a>
   <SiteHeader lang={lang} />
 
@@ -35,7 +52,7 @@ const products: { key: ProductKey; image: string; width: number; height: number 
         <h1>{t.heroTitle}</h1>
         <div class="hero__divider" aria-hidden="true"><span>✦</span></div>
         <p>{t.heroLead}</p>
-        <a class="button" href="#collection">
+        <a class="button" href={`/${lang}/shop/`}>
           {t.heroCta}
           <Icon name="arrow" size={20} />
         </a>
@@ -46,12 +63,14 @@ const products: { key: ProductKey; image: string; width: number; height: number 
       <ul>
         {
           seasons.map((s) => (
-            <li class="season-card" style={`--tint: var(--tint-${s});`}>
-              <img src={`/images/home/season-${s}.webp`} alt="" width="105" height="83" loading="lazy" />
-              <span class="season-card__label">
-                {t.seasons[s]}
-                <Icon name="arrow" size={16} />
-              </span>
+            <li class="season-card" style={`--tint: var(--tint-${s});`} data-season={s}>
+              <a href={`/${lang}/shop/?season=${s}`}>
+                <img src={`/images/home/season-${s}.webp`} alt="" width="105" height="83" loading="lazy" />
+                <span class="season-card__label">
+                  {t.seasons[s]}
+                  <Icon name="arrow" size={16} />
+                </span>
+              </a>
             </li>
           ))
         }
@@ -61,22 +80,7 @@ const products: { key: ProductKey; image: string; width: number; height: number 
     <section id="collection" class="collection" aria-labelledby="collection-title">
       <h2 id="collection-title" class="visually-hidden">{t.collectionTitle}</h2>
       <ul>
-        {
-          products.map((p) => (
-            <li class="product-card">
-              <div class="product-card__photo">
-                <img src={`/images/home/${p.image}.webp`} alt={t.products[p.key].name} width={p.width} height={p.height} loading="lazy" />
-              </div>
-              <div class="product-card__body">
-                <span class="product-card__arrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
-                <div>
-                  <h3>{t.products[p.key].name}</h3>
-                  <p>{t.products[p.key].detail}</p>
-                </div>
-              </div>
-            </li>
-          ))
-        }
+        {products.map((product) => <ProductCard product={product} lang={lang} />)}
       </ul>
       <p class="preview-note"><span aria-hidden="true">✦</span> {t.previewNote} <span aria-hidden="true">✦</span></p>
     </section>
@@ -84,13 +88,26 @@ const products: { key: ProductKey; image: string; width: number; height: number 
     <section id="about" class="about" aria-labelledby="about-title">
       <h2 id="about-title">{t.aboutTitle}</h2>
       <p>{t.aboutBody}</p>
-      <p>{t.statusBody}</p>
+      <p data-sales-status data-open-text={t.statusOpenBody}>{t.statusBody}</p>
       <p>{t.contactBody} <a href="mailto:info@pipolune.com">info@pipolune.com</a></p>
     </section>
   </main>
 
   <SiteFooter lang={lang} />
 </BaseLayout>
+
+<script>
+  import { getSession } from '../../lib/session';
+
+  // Season (Europe/Istanbul calendar or pinned in Studio) and sales mode come from the API.
+  getSession()
+    .then((s) => {
+      document.querySelector(`.season-card[data-season="${s.settings.season}"]`)?.classList.add('is-current');
+      const status = document.querySelector<HTMLElement>('[data-sales-status]');
+      if (status && s.settings.salesMode !== 'off' && status.dataset.openText) status.textContent = status.dataset.openText;
+    })
+    .catch(() => {});
+</script>
 
 <style>
   /* ---------- Hero ---------- */
@@ -203,14 +220,25 @@ const products: { key: ProductKey; image: string; width: number; height: number 
   }
 
   .season-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-bottom: var(--space-3);
     background: var(--tint);
     border-radius: var(--radius-sm);
     overflow: hidden;
+    outline: 1px solid transparent;
+    transition: outline-color 0.2s ease;
+  }
+
+  .season-card.is-current {
+    outline-color: rgb(32 61 43 / 0.35);
+  }
+
+  .season-card a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding-bottom: var(--space-3);
     text-align: center;
+    text-decoration: none;
   }
 
   .season-card img {
@@ -231,7 +259,7 @@ const products: { key: ProductKey; image: string; width: number; height: number 
       gap: var(--space-4);
     }
 
-    .season-card {
+    .season-card a {
       flex-direction: row;
       min-height: 96px;
       padding-bottom: 0;
@@ -264,45 +292,6 @@ const products: { key: ProductKey; image: string; width: number; height: number 
     padding: 0;
   }
 
-  .product-card {
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    background: var(--color-surface);
-  }
-
-  .product-card__photo {
-    background: var(--color-photo);
-  }
-
-  .product-card__photo img {
-    width: 100%;
-    aspect-ratio: 5 / 4;
-    object-fit: cover;
-  }
-
-  .product-card__body {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4) var(--space-4);
-  }
-
-  .product-card h3 {
-    font-family: var(--font-text);
-    font-size: 1.125rem;
-    font-weight: 500;
-  }
-
-  .product-card p {
-    font-size: 0.9375rem;
-    color: var(--color-text-muted);
-  }
-
-  .product-card__arrow {
-    display: none;
-  }
-
   .preview-note {
     margin-top: var(--space-5);
     font-size: 0.875rem;
@@ -314,18 +303,6 @@ const products: { key: ProductKey; image: string; width: number; height: number 
     .collection ul {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--space-4);
-    }
-
-    .product-card__arrow {
-      display: inline-flex;
-      flex: none;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      margin-top: 2px;
-      border: 1px solid var(--color-forest);
-      border-radius: 50%;
     }
   }
 

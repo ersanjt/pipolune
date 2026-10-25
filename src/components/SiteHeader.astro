@@ -11,7 +11,7 @@ const { lang, path = '' } = Astro.props;
 const t = ui[lang];
 const home = `/${lang}/`;
 const navItems = [
-  { href: `${home}#collection`, label: t.nav.shop },
+  { href: `${home}shop/`, label: t.nav.shop },
   { href: `${home}#seasons`, label: t.nav.seasons },
   { href: `${home}#about`, label: t.nav.about },
 ];
@@ -32,6 +32,7 @@ const navItems = [
     <nav id="site-nav" class="site-nav" aria-label={t.menu}>
       <ul>
         {navItems.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        <li class="site-nav__mobile-only"><a href={`${home}account/`}>{t.account}</a></li>
       </ul>
     </nav>
 
@@ -54,20 +55,26 @@ const navItems = [
           ))
         }
       </ul>
-      <span class="icon-btn icon-btn--soon hide-mobile" role="img" aria-label={`${t.search} — ${t.comingSoon}`} title={`${t.search} — ${t.comingSoon}`}>
+      <a class="icon-btn hide-mobile" href={`${home}shop/`} title={t.search}>
         <Icon name="search" />
-      </span>
-      <span class="icon-btn icon-btn--soon hide-mobile" role="img" aria-label={`${t.account} — ${t.comingSoon}`} title={`${t.account} — ${t.comingSoon}`}>
+        <span class="visually-hidden">{t.search}</span>
+      </a>
+      <a class="icon-btn hide-mobile" href={`${home}account/`} title={t.account}>
         <Icon name="account" />
-      </span>
-      <span class="icon-btn icon-btn--soon" role="img" aria-label={`${t.bag} — ${t.comingSoon}`} title={`${t.bag} — ${t.comingSoon}`}>
+        <span class="visually-hidden">{t.account}</span>
+      </a>
+      <a class="icon-btn bag-link" href={`${home}bag/`} title={t.bag}>
         <Icon name="bag" />
-      </span>
+        <span class="visually-hidden">{t.bag}</span>
+        <span class="bag-link__count" data-cart-count hidden></span>
+      </a>
     </div>
   </div>
 </header>
 
 <script>
+  import { getSession, onSession, rememberLanguage, type Session } from '../lib/session';
+
   const header = document.querySelector<HTMLElement>('.site-header');
   const button = header?.querySelector<HTMLButtonElement>('.site-header__menu-btn');
   const setOpen = (open: boolean) => {
@@ -83,15 +90,22 @@ const navItems = [
     }
   });
 
+  // The switcher keeps the current page and its query, and remembers the choice for "/" (lang-redirect.php).
   document.querySelectorAll<HTMLAnchorElement>('.lang-switch a[data-lang]').forEach((link) => {
     link.addEventListener('click', () => {
-      try {
-        localStorage.setItem('pipolune:lang', link.dataset.lang ?? '');
-      } catch {
-        /* storage unavailable (private mode) — the URL still carries the language */
-      }
+      rememberLanguage(link.dataset.lang ?? 'en');
+      if (location.search) link.href = link.pathname + location.search;
     });
   });
+
+  const count = document.querySelector<HTMLElement>('[data-cart-count]');
+  const render = (s: Session) => {
+    if (!count) return;
+    count.textContent = String(s.cartCount);
+    count.hidden = s.cartCount === 0;
+  };
+  onSession(render);
+  getSession().then(render).catch(() => {});
 </script>
 
 <style>
@@ -119,6 +133,7 @@ const navItems = [
   }
 
   .icon-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -132,8 +147,24 @@ const navItems = [
     cursor: pointer;
   }
 
-  .icon-btn--soon {
-    cursor: default;
+  .bag-link__count {
+    position: absolute;
+    top: 6px;
+    right: 4px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    font-family: var(--font-text);
+    font-size: 0.6875rem;
+    line-height: 17px;
+    text-align: center;
+    color: var(--color-milk);
+    background: var(--color-forest);
+    border-radius: 999px;
+  }
+
+  .bag-link__count[hidden] {
+    display: none;
   }
 
   .icon-close,
@@ -265,6 +296,10 @@ const navItems = [
 
     .hide-mobile {
       display: inline-flex;
+    }
+
+    .site-nav__mobile-only {
+      display: none;
     }
   }
 </style>
