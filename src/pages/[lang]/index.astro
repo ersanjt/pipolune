@@ -254,6 +254,21 @@ const jsonLd = [
     font-size: 0.9375rem;
   }
 
+  @media (max-width: 639px) {
+    .seasons ul {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-3);
+    }
+
+    .season-card a {
+      min-height: 96px;
+    }
+
+    .season-card__label {
+      font-size: 1rem;
+    }
+  }
+
   @media (min-width: 900px) {
     .seasons ul {
       gap: var(--space-4);

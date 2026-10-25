@@ -16,6 +16,11 @@ interface Dictionary {
   skipLink: string;
   languageLabel: string;
   nav: { shop: string; seasons: string; about: string };
+  home: string;
+  shortcuts: string;
+  footerHelp: string;
+  footerLegal: string;
+  footerContact: string;
   menu: string;
   closeMenu: string;
   search: string;
@@ -47,6 +52,11 @@ export const ui: Record<Locale, Dictionary> = {
     skipLink: 'Skip to content',
     languageLabel: 'Language',
     nav: { shop: 'Shop', seasons: 'Seasons', about: 'About' },
+    home: 'Home',
+    shortcuts: 'Shortcuts',
+    footerHelp: 'Help',
+    footerLegal: 'Legal',
+    footerContact: 'Contact',
     menu: 'Menu',
     closeMenu: 'Close menu',
     search: 'Search',
@@ -79,6 +89,11 @@ export const ui: Record<Locale, Dictionary> = {
     skipLink: 'İçeriğe geç',
     languageLabel: 'Dil',
     nav: { shop: 'Mağaza', seasons: 'Mevsimler', about: 'Hakkımızda' },
+    home: 'Ana sayfa',
+    shortcuts: 'Kısayollar',
+    footerHelp: 'Yardım',
+    footerLegal: 'Yasal',
+    footerContact: 'İletişim',
     menu: 'Menü',
     closeMenu: 'Menüyü kapat',
     search: 'Ara',
@@ -111,6 +126,11 @@ export const ui: Record<Locale, Dictionary> = {
     skipLink: 'Перейти к содержанию',
     languageLabel: 'Язык',
     nav: { shop: 'Магазин', seasons: 'Сезоны', about: 'О нас' },
+    home: 'Главная',
+    shortcuts: 'Разделы',
+    footerHelp: 'Помощь',
+    footerLegal: 'Документы',
+    footerContact: 'Контакты',
     menu: 'Меню',
     closeMenu: 'Закрыть меню',
     search: 'Поиск',

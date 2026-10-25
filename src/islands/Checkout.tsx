@@ -4,6 +4,7 @@ import { money } from '../lib/format';
 import { currentCurrency } from '../lib/currency';
 import { getSession, updateSession, type Session } from '../lib/session';
 import { errorText, shop } from '../i18n/shop';
+import { checkoutDocuments, legal } from '../i18n/legal';
 import type { Locale } from '../i18n/ui';
 import { Button, Checkbox, Field, Notice, Spinner, useForm } from './ui';
 import type { CartView } from './Bag';
@@ -28,6 +29,7 @@ export default function Checkout({ lang }: { lang: Locale }) {
     phone: '',
     note: '',
     marketing: false,
+    acceptLegal: false,
   });
 
   const currency = currentCurrency(lang);
@@ -92,10 +94,13 @@ export default function Checkout({ lang }: { lang: Locale }) {
 
   async function placeRequest() {
     await form.submit(async () => {
-      const res = await api<{ number: string; token: string }>('/checkout', { method: 'POST', body: { ...v, locale: lang, currency: cart!.currency } });
+      const res = await api<{ number: string; token: string }>('/checkout', {
+        method: 'POST',
+        body: { ...v, locale: lang, currency: cart!.currency },
+      });
       updateSession({ cartCount: 0 });
       location.href = `/${lang}/order/?n=${encodeURIComponent(res.number)}&t=${encodeURIComponent(res.token)}&new=1`;
-    });
+    }, v.acceptLegal ? {} : { acceptLegal: 'legal_required' });
   }
 
   const summary = (
@@ -231,8 +236,31 @@ export default function Checkout({ lang }: { lang: Locale }) {
               </Button>
             </div>
             <Notice tone="info">{t.noPaymentNote}</Notice>
+            <section class="legal-panel" aria-labelledby="legal-title">
+              <h2 class="h-sub" id="legal-title">{t.legalTitle}</h2>
+              <p>{t.legalLead}</p>
+              <ul>
+                {checkoutDocuments.map((slug) => (
+                  <li>
+                    <a href={`/${lang}/legal/${slug}/`} target="_blank" rel="noopener noreferrer">
+                      {legal[lang].documents[slug].title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <Checkbox
+                name="acceptLegal"
+                label={t.legalAccept}
+                checked={v.acceptLegal}
+                invalid={Boolean(form.errors.acceptLegal)}
+                onChange={form.set('acceptLegal')}
+              />
+              {form.errors.acceptLegal && <p class="field__error">{form.errors.acceptLegal}</p>}
+            </section>
             {form.formError && <Notice tone="error">{form.formError}</Notice>}
-            {Object.keys(form.errors).length > 0 && <Notice tone="error">{Object.values(form.errors)[0]}</Notice>}
+            {Object.entries(form.errors).some(([key]) => key !== 'acceptLegal') && (
+              <Notice tone="error">{Object.entries(form.errors).find(([key]) => key !== 'acceptLegal')?.[1]}</Notice>
+            )}
             <div class="form-actions form-actions--split">
               <Button variant="link" onClick={() => setStep(2)}>
                 ← {t.back}

@@ -27,8 +27,11 @@ $router->post('/auth/register', static function () use ($sendVerification) {
     $password = $in->password();
     $name = $in->str('name', 120) ?? '';
     $locale = locale($in->raw('locale'));
-    $marketing = $in->bool('marketing');
-    if ($email && Db::value('SELECT id FROM users WHERE email = ?', [$email])) {
+        $marketing = $in->bool('marketing');
+        if (!$in->bool('acceptLegal')) {
+            $in->fail('acceptLegal', 'legal_required');
+        }
+        if ($email && Db::value('SELECT id FROM users WHERE email = ?', [$email])) {
         $in->fail('email', 'email_taken');
     }
     $in->check();
@@ -36,8 +39,9 @@ $router->post('/auth/register', static function () use ($sendVerification) {
         'email' => $email,
         'password_hash' => password_hash($password, PASSWORD_DEFAULT),
         'name' => $name,
-        'locale' => $locale,
-        'marketing_opt_in' => $marketing ? 1 : 0,
+            'locale' => $locale,
+            'marketing_opt_in' => $marketing ? 1 : 0,
+            'legal_accepted_at' => gmdate('Y-m-d H:i:s'),
     ]);
     // Guest orders placed with this email become visible in the new account.
     Db::run('UPDATE orders SET user_id = ? WHERE email = ? AND user_id IS NULL', [$id, $email]);

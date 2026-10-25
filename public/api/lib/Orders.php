@@ -8,6 +8,8 @@ final class Orders
     public const STATUSES = ['requested', 'confirmed', 'completed', 'cancelled'];
     public const PAYMENT = ['not_started', 'pending', 'paid', 'failed', 'refunded'];
     public const FULFILMENT = ['unfulfilled', 'preparing', 'shipped', 'delivered', 'returned'];
+    /** Keep in step with LEGAL_VERSION in src/i18n/legal.ts. */
+    public const LEGAL_VERSION = '2026-10-25';
 
     /** Turns the current bag into an order request. Prices and stock are re-read inside the transaction. */
     public static function checkout(array $data, string $locale): array
@@ -32,6 +34,9 @@ final class Orders
         $phone = $in->str('phone', 40);
         $note = $in->str('note', 500);
         $marketing = $in->bool('marketing');
+        if (!$in->bool('acceptLegal')) {
+            $in->fail('acceptLegal', 'legal_required');
+        }
         $in->check();
 
         $cartId = Cart::id(false) ?? throw new ApiError(409, 'cart_empty', 'Your bag is empty.');
@@ -67,6 +72,8 @@ final class Orders
                 'total' => $subtotal + (int) $shipping,
                 'marketing_opt_in' => $marketing ? 1 : 0,
                 'customer_note' => $note,
+                'legal_version' => self::LEGAL_VERSION,
+                'legal_accepted_at' => gmdate('Y-m-d H:i:s'),
                 'access_token_hash' => '',
             ] + $address);
             $number = 'PL' . (1000 + $id);
@@ -86,6 +93,7 @@ final class Orders
                 ]);
             }
             self::event($id, 'requested', 'Order request received.', true, null);
+            self::event($id, 'legal', 'Customer accepted legal documents ' . self::LEGAL_VERSION . '.', false, null);
             if ($marketing) {
                 Db::run("DELETE FROM mail_suppressions WHERE email = ? AND category = 'marketing'", [$email]);
                 if ($user && !$user['marketing_opt_in']) {
@@ -232,6 +240,8 @@ final class Orders
                 'locale' => $o['locale'],
                 'note' => $o['customer_note'],
                 'marketing' => (bool) $o['marketing_opt_in'],
+                'legalVersion' => $o['legal_version'] ?? null,
+                'legalAcceptedAt' => empty($o['legal_accepted_at']) ? null : iso($o['legal_accepted_at']),
                 'hasAccount' => $o['user_id'] !== null,
             ];
         }

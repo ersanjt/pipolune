@@ -1,12 +1,19 @@
 import type { APIRoute } from 'astro';
 import { loadCatalog } from '../lib/catalog';
+import { legalSlugs } from '../i18n/legal';
 import { defaultLocale, locales } from '../i18n/ui';
 
 // One <url> per language with every alternate, as Google expects for hreflang in sitemaps.
 export const GET: APIRoute = async ({ site }) => {
   const origin = site!.origin;
   const products = await loadCatalog();
-  const paths = ['', 'shop/', ...products.filter((p) => p.translations.en).map((p) => `shop/${p.slug}/`)];
+  const paths = [
+    '',
+    'shop/',
+    'legal/',
+    ...legalSlugs.map((slug) => `legal/${slug}/`),
+    ...products.filter((p) => p.translations.en).map((p) => `shop/${p.slug}/`),
+  ];
 
   const urls = paths.flatMap((path) => {
     const available = path.startsWith('shop/') && path !== 'shop/'

@@ -4,6 +4,7 @@ import { money, date } from '../lib/format';
 import { currentCurrency, type Currency } from '../lib/currency';
 import { getSession, updateSession, rememberLanguage, type Session, type User } from '../lib/session';
 import { errorText, shop } from '../i18n/shop';
+import { legal } from '../i18n/legal';
 import { locales, localeNames, type Locale } from '../i18n/ui';
 import { Button, Checkbox, Field, Notice, PasswordField, Spinner, useForm } from './ui';
 import OrderDetail, { type Order } from './OrderDetail';
@@ -104,7 +105,7 @@ function Benefits({ lang }: { lang: Locale }) {
 
 function Create({ lang }: { lang: Locale }) {
   const t = shop[lang];
-  const form = useForm(lang, { name: '', email: '', password: '', confirm: '', marketing: false });
+  const form = useForm(lang, { name: '', email: '', password: '', confirm: '', marketing: false, acceptLegal: false });
   return (
     <>
       <div class="auth-layout">
@@ -116,6 +117,7 @@ function Create({ lang }: { lang: Locale }) {
             const local: Record<string, string> = {};
             if (form.values.password.length < 8) local.password = 'password_too_short';
             if (form.values.password !== form.values.confirm) local.confirm = 'passwords_differ';
+            if (!form.values.acceptLegal) local.acceptLegal = 'legal_required';
             form.submit(async () => {
               const { confirm, ...body } = form.values;
               await api('/auth/register', { method: 'POST', body: { ...body, locale: lang } });
@@ -128,6 +130,13 @@ function Create({ lang }: { lang: Locale }) {
           <PasswordField label={t.password} name="password" autoComplete="new-password" required value={form.values.password} onInput={form.set('password')} error={form.errors.password} placeholder={t.passwordHint} showLabel={t.showPassword} hideLabel={t.hidePassword} />
           <PasswordField label={t.confirmPassword} name="confirm" autoComplete="new-password" required value={form.values.confirm} onInput={form.set('confirm')} error={form.errors.confirm} placeholder={t.confirmPlaceholder} showLabel={t.showPassword} hideLabel={t.hidePassword} />
           <Checkbox name="marketing" label={t.marketingOptIn} checked={form.values.marketing} onChange={form.set('marketing')} />
+          <Checkbox name="acceptLegal" label={t.accountLegalAccept} checked={form.values.acceptLegal} invalid={Boolean(form.errors.acceptLegal)} onChange={form.set('acceptLegal')} />
+          {form.errors.acceptLegal && <p class="field__error">{form.errors.acceptLegal}</p>}
+          <p class="auth-links">
+            <a href={`/${lang}/legal/terms/`} target="_blank" rel="noopener noreferrer">{legal[lang].documents.terms.title}</a>
+            {' · '}
+            <a href={`/${lang}/legal/privacy/`} target="_blank" rel="noopener noreferrer">{legal[lang].documents.privacy.title}</a>
+          </p>
           {form.formError && <Notice tone="error">{form.formError}</Notice>}
           <Button type="submit" busy={form.busy} arrow full>
             {t.createAccount}

@@ -1,0 +1,99 @@
+---
+import { seller } from '../lib/seller';
+import { legal, type Locale } from '../i18n/legal';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const copy = legal[lang];
+const labels = copy.sellerLabels;
+const rows: { label: string; value: string; href?: string }[] = [
+  { label: labels.tradeName, value: seller.tradeName },
+  { label: labels.legalName, value: seller.legalName },
+  { label: labels.address, value: seller.address },
+  { label: labels.taxNumber, value: seller.taxNumber },
+  { label: labels.mersis, value: seller.mersis },
+  { label: labels.phone, value: seller.phone },
+  { label: labels.email, value: seller.email, href: `mailto:${seller.email}` },
+  { label: labels.website, value: seller.website, href: seller.website },
+  { label: labels.place, value: copy.place },
+].filter((row) => row.value.trim() !== '');
+const missing = [
+  [labels.legalName, seller.legalName],
+  [labels.address, seller.address],
+  [labels.taxNumber, seller.taxNumber],
+  [labels.mersis, seller.mersis],
+  [labels.phone, seller.phone],
+]
+  .filter(([, value]) => value.trim() === '')
+  .map(([label]) => label);
+---
+
+<aside class="seller-card">
+  <h2>{copy.sellerTitle}</h2>
+  <dl>
+    {
+      rows.map((row) => (
+        <>
+          <dt>{row.label}</dt>
+          <dd>{row.href ? <a href={row.href}>{row.value}</a> : row.value}</dd>
+        </>
+      ))
+    }
+  </dl>
+  {missing.length > 0 && <p>{copy.sellerPending.replace('{items}', missing.join(', '))}</p>}
+</aside>
+
+<style>
+  .seller-card {
+    display: grid;
+    gap: var(--space-3);
+    margin: var(--space-5) 0;
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+  }
+
+  .seller-card h2 {
+    font-size: 1.375rem;
+    font-weight: 500;
+  }
+
+  .seller-card dl {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) 1fr;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+  }
+
+  .seller-card dt {
+    color: var(--color-text-muted);
+  }
+
+  .seller-card dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .seller-card a {
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 599px) {
+    .seller-card dl {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .seller-card dt {
+      margin-top: var(--space-3);
+    }
+
+    .seller-card dd + dt {
+      margin-top: var(--space-3);
+    }
+  }
+</style>

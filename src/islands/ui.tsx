@@ -69,10 +69,16 @@ export function PasswordField(props: Parameters<typeof Field>[0] & { showLabel: 
   );
 }
 
-export function Checkbox(props: { label: string; checked: boolean; onChange: (v: boolean) => void; name: string }) {
+export function Checkbox(props: { label: ComponentChildren; checked: boolean; onChange: (v: boolean) => void; name: string; invalid?: boolean }) {
   return (
     <label class="checkbox">
-      <input type="checkbox" name={props.name} checked={props.checked} onChange={(e) => props.onChange(e.currentTarget.checked)} />
+      <input
+        type="checkbox"
+        name={props.name}
+        checked={props.checked}
+        aria-invalid={props.invalid || undefined}
+        onChange={(e) => props.onChange(e.currentTarget.checked)}
+      />
       <span>{props.label}</span>
     </label>
   );

@@ -6,6 +6,7 @@ import ProductBuy from '../../../islands/ProductBuy';
 import ProductGallery from '../../../islands/ProductGallery';
 import { locales, ui, type Locale } from '../../../i18n/ui';
 import { shop } from '../../../i18n/shop';
+import { legal } from '../../../i18n/legal';
 import { loadCatalog, photos, text } from '../../../lib/catalog';
 
 export async function getStaticPaths() {
@@ -65,6 +66,11 @@ const jsonLd = [
         <p class="product__subtitle">{copy.subtitle}</p>
         <ProductBuy client:load lang={lang} slug={product.slug} prices={product.prices} variants={product.variants} />
         {copy.description && <p class="product__description">{copy.description}</p>}
+        <p class="product__policies">
+          <a href={`/${lang}/legal/delivery/`}>{legal[lang].documents.delivery.title}</a>
+          <span aria-hidden="true">·</span>
+          <a href={`/${lang}/legal/returns/`}>{legal[lang].documents.returns.title}</a>
+        </p>
         <p class="product__note"><span aria-hidden="true">✦</span> {t.previewNote}</p>
       </div>
     </article>
@@ -168,6 +174,17 @@ const jsonLd = [
 
   .product__description {
     max-width: 52ch;
+  }
+
+  .product__policies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-3);
+    font-size: 0.9375rem;
+  }
+
+  .product__policies a {
+    text-underline-offset: 3px;
   }
 
   .product__note {

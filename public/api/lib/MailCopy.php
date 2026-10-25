@@ -206,6 +206,7 @@ final class MailCopy
                 'below' => [
                     'Total: {total}',
                     'No payment has been taken. We will check availability and write to you to confirm the order, delivery and payment.',
+                    'The pre-information form, distance sales agreement and privacy notice you accepted are kept at https://pipolune.com/en/legal/ (version 2026-10-25).',
                 ],
                 'button' => 'View your order',
             ],
@@ -217,6 +218,7 @@ final class MailCopy
                 'below' => [
                     'Toplam: {total}',
                     'Herhangi bir ödeme alınmadı. Stok durumunu kontrol edip siparişi, teslimatı ve ödemeyi onaylamak için size yazacağız.',
+                    'Kabul ettiğiniz ön bilgilendirme formu, mesafeli satış sözleşmesi ve gizlilik bildirimi https://pipolune.com/tr/legal/ adresinde durur (sürüm 2026-10-25).',
                 ],
                 'button' => 'Siparişi görüntüle',
             ],
@@ -228,6 +230,7 @@ final class MailCopy
                 'below' => [
                     'Итого: {total}',
                     'Оплата не списывалась. Мы проверим наличие и напишем, чтобы подтвердить заказ, доставку и оплату.',
+                    'Преддоговорная информация, договор дистанционной продажи и уведомление о конфиденциальности, которые вы приняли, хранятся на https://pipolune.com/ru/legal/ (версия 2026-10-25).',
                 ],
                 'button' => 'Посмотреть заказ',
             ],
