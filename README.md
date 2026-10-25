@@ -73,7 +73,7 @@ Add or edit text in `src/i18n/ui.ts` for all three languages at once. Colours an
 
 Every push to `main` runs `.github/workflows/ci.yml`: the **Build** job builds `dist/` and stores it as an artifact; the **Deploy to cPanel** job uploads exactly that artifact over SFTP with `scripts/deploy.mjs`. Pull requests only build. The deploy job never cancels mid-upload.
 
-`scripts/deploy.mjs` keeps the cPanel-generated blocks (PHP handler, ini directives) from the server's `public_html/.htaccess` and appends them to ours. It refuses to upload if those blocks are missing. Upload order: `_astro/` assets, then pages, then `.htaccess`.
+`scripts/deploy.mjs` keeps the cPanel-generated blocks (PHP handler, ini directives) from the server's `public_html/.htaccess` and appends them to ours. It refuses to upload if those blocks are missing. Upload order: `_astro/` assets, then pages, then `.htaccess`. After uploading it clears cPanel's nginx page cache (`uapi NginxCaching clear_cache`) so the new version is served immediately.
 
 Repository secrets (Settings → Secrets and variables → Actions):
 

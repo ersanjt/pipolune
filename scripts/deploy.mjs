@@ -21,27 +21,27 @@ if (!existsSync(join(DIST, ".htaccess"))) throw new Error("dist/.htaccess is mis
 const slash = (p) => p.replaceAll("\\", "/");
 const quote = (p) => `"${slash(p)}"`;
 const work = mkdtempSync(join(tmpdir(), "site-deploy-"));
+const sshOptions = ["-i", KEY, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes"];
 
 function sftp(lines) {
   const batch = join(work, "batch.txt");
   writeFileSync(batch, `${lines.join("\n")}\n`);
-  const res = spawnSync(
-    "sftp",
-    [
-      "-P", PORT,
-      "-i", KEY,
-      "-o", "IdentitiesOnly=yes",
-      "-o", "BatchMode=yes",
-      "-o", "StrictHostKeyChecking=yes",
-      "-b", batch,
-      `${SFTP_USER}@${SFTP_HOST}`,
-    ],
-    { encoding: "utf8" },
-  );
+  const res = spawnSync("sftp", ["-P", PORT, ...sshOptions, "-b", batch, `${SFTP_USER}@${SFTP_HOST}`], {
+    encoding: "utf8",
+  });
   if (res.status !== 0) {
     process.stderr.write(res.stdout + res.stderr);
     throw new Error(`sftp exited with ${res.status}`);
   }
+}
+
+// cPanel's ea-nginx proxy caches pages (it kept serving an empty "Index of /" after the first upload).
+function clearServerCache() {
+  const res = spawnSync("ssh", ["-p", PORT, ...sshOptions, `${SFTP_USER}@${SFTP_HOST}`, "uapi NginxCaching clear_cache"], {
+    encoding: "utf8",
+  });
+  if (res.status === 0 && /result:[\s\S]*?status: 1|errors: ~/.test(res.stdout)) console.log("Cleared nginx cache.");
+  else console.warn(`Could not clear nginx cache (exit ${res.status}): ${(res.stderr || res.stdout).trim()}`);
 }
 
 try {
@@ -85,6 +85,7 @@ try {
     ...files.map((f) => `chmod 644 ${f}`),
   ]);
   console.log(`Deployed ${files.length} files to ${REMOTE}.`);
+  clearServerCache();
 } finally {
   rmSync(work, { recursive: true, force: true });
 }
