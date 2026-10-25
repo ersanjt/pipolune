@@ -1,0 +1,35 @@
+---
+import { defaultLocale, locales, localeNames } from '../i18n/ui';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pipolune</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    {locales.map((l) => <link rel="alternate" hreflang={l} href={`https://pipolune.com/${l}/`} />)}
+    <script is:inline define:vars={{ locales, defaultLocale }}>
+      let target = defaultLocale;
+      try {
+        const saved = localStorage.getItem('pipolune:lang');
+        if (locales.includes(saved)) target = saved;
+        else {
+          const preferred = (navigator.languages || [navigator.language || '']).map((l) => l.slice(0, 2).toLowerCase());
+          target = preferred.find((l) => locales.includes(l)) || defaultLocale;
+        }
+      } catch {
+        /* fall back to default locale */
+      }
+      location.replace(`/${target}/`);
+    </script>
+    <noscript><meta http-equiv="refresh" content={`0; url=/${defaultLocale}/`} /></noscript>
+  </head>
+  <body style="font-family: system-ui, sans-serif; background: #f7f2e8; color: #203d2b; padding: 2rem;">
+    <ul>
+      {locales.map((l) => <li><a href={`/${l}/`} hreflang={l}>{localeNames[l]}</a></li>)}
+    </ul>
+  </body>
+</html>

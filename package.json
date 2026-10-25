@@ -1,0 +1,19 @@
+{
+  "name": "pipolune",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pipolune — children's woodland boutique for Türkiye (EN/TR/RU).",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@fontsource/cormorant-garamond": "^5.3.0",
+    "astro": "^7.4.2"
+  }
+}

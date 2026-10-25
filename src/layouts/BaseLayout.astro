@@ -1,0 +1,44 @@
+---
+import '@fontsource/cormorant-garamond/500.css';
+import '@fontsource/cormorant-garamond/600.css';
+import '../styles/global.css';
+import { locales, type Locale } from '../i18n/ui';
+
+interface Props {
+  lang: Locale;
+  title: string;
+  description: string;
+  /** Path after the locale prefix, e.g. "" for home. Used for hreflang alternates. */
+  path?: string;
+  noindex?: boolean;
+}
+
+const { lang, title, description, path = '', noindex = false } = Astro.props;
+const site = Astro.site ?? new URL('https://pipolune.com');
+const canonical = new URL(`/${lang}/${path}`, site).href;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonical} />
+    {locales.map((l) => <link rel="alternate" hreflang={l} href={new URL(`/${l}/${path}`, site).href} />)}
+    <link rel="alternate" hreflang="x-default" href={new URL('/', site).href} />
+    <meta name="theme-color" content="#F7F2E8" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/brand/woodland-four-seasons-banner.webp', site).href} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

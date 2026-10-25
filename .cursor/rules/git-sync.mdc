@@ -1,0 +1,15 @@
+---
+description: Always commit and push Pipolune work to GitHub so the client can review and edit it
+alwaysApply: true
+---
+
+# Always push to GitHub
+
+The client (repository collaborator) reviews and edits this project directly on GitHub (`ersanjt/pipolune`). Local-only work is invisible to her.
+
+- After every completed change, run `npm run build` if site code changed, then commit and push to `origin main`.
+- Before starting work, `git pull --rebase origin main` — the client may have pushed changes.
+- Commit messages: short imperative English, e.g. `Add catalogue filter panel`, `Update approved style v1.2`.
+- Never commit `private/`, `.env*`, passwords, FTP/cPanel credentials, invoices or personal data. Server credentials live only in GitHub Actions secrets.
+- File naming: lowercase kebab-case; language suffix before extension (`*.ru.md`, `*.en.md`); versions as `v1.1`.
+- Design source of truth: `docs/brand/approved-style-v1.1.ru.md` and `docs/uiux/uiux-foundation-v1.ru.md`. The older `docs/product/website-brief-v0.en.md` visual sections are superseded.

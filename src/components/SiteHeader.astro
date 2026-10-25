@@ -1,0 +1,101 @@
+---
+import { locales, localeNames, ui, type Locale } from '../i18n/ui';
+
+interface Props {
+  lang: Locale;
+  path?: string;
+}
+
+const { lang, path = '' } = Astro.props;
+const t = ui[lang];
+---
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="site-header__logo" href={`/${lang}/`} aria-label="Pipolune">
+      <img src="/brand/wordmark-concept.png" alt="Pipolune" width="723" height="204" />
+    </a>
+    <nav class="lang-switch" aria-label={t.languageLabel}>
+      <ul>
+        {
+          locales.map((l) => (
+            <li>
+              <a
+                href={`/${l}/${path}`}
+                hreflang={l}
+                lang={l}
+                data-lang={l}
+                aria-current={l === lang ? 'true' : undefined}
+                title={localeNames[l]}
+              >
+                {l.toUpperCase()}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('.lang-switch a[data-lang]').forEach((link) => {
+    link.addEventListener('click', () => {
+      try {
+        localStorage.setItem('pipolune:lang', link.dataset.lang ?? '');
+      } catch {
+        /* storage unavailable (private mode) — the URL still carries the language */
+      }
+    });
+  });
+</script>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: 72px;
+  }
+
+  .site-header__logo img {
+    width: clamp(120px, 22vw, 168px);
+  }
+
+  .lang-switch ul {
+    display: flex;
+    gap: var(--space-1);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .lang-switch a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--control-height);
+    min-height: var(--control-height);
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-sm);
+  }
+
+  .lang-switch a:hover {
+    color: var(--color-forest);
+  }
+
+  .lang-switch a[aria-current='true'] {
+    color: var(--color-forest);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 6px;
+  }
+</style>

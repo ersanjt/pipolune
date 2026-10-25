@@ -1,50 +1,80 @@
 # Pipolune
 
-Children’s woodland boutique for Türkiye. Brand, concept art and UI/UX project archive.
+Children's woodland boutique for Türkiye — brand, UI/UX and website. Languages EN / TR / RU, prices in TRY, calendar Europe/Istanbul.
 
-**Status:** design and UX planning. This repository does not contain a production-ready store, working authentication, payment integration, installable custom font or print-ready packaging.
+**Status:** design and early development. The live site is a pre-launch page; there is no catalogue, account, checkout or payment yet, and the site must not suggest otherwise.
+
+Website: https://pipolune.com · Contact: info@pipolune.com
 
 ## Start here
 
-1. [UI/UX foundation (Russian PDF)](docs/uiux/Pipolune_UIUX_Foundation_v1_RU.pdf)
-2. [Selected visual direction](design/reference/00-selected-direction.png)
-3. [Style rules](docs/brand/Pipolune_Approved_Style_v1_1_RU.md)
-4. [Experience specification](docs/brand/Pipolune_Experience_Blueprint_v1_RU.md)
-5. [Brand constitution](docs/brand/Pipolune_Brand_Constitution_v1_RU.md)
+1. [Approved style v1.1 (RU)](docs/brand/approved-style-v1.1.ru.md) — logo, colours, four seasons, rules. **Source of truth for visuals.**
+2. [UI/UX foundation v1 (RU)](docs/uiux/uiux-foundation-v1.ru.md) — site map, scenarios, components, mobile, checkout and tracking rules ([original PDF](docs/uiux/uiux-foundation-v1.ru.pdf)).
+3. [Website brief v0 (EN)](docs/product/website-brief-v0.en.md) — product, catalogue and trust requirements. Its logo, palette and typography sections are superseded by the approved style.
 
 ## Reference boards
 
-- [Home and four seasons](design/reference/01-home-seasons.png)
-- [Catalogue, menu, product](design/reference/02-catalogue-menu-product.png)
-- [Mobile](design/reference/03-mobile.png)
-- [Bag, checkout, account](design/reference/04-bag-checkout-account.png)
-- [Administration](design/reference/05-admin.png)
-- [Packaging](design/reference/06-packaging.png)
+| # | Board |
+|---|---|
+| 00 | [Selected direction](design/reference/00-selected-direction.png) |
+| 01 | [Home and four seasons](design/reference/01-home-seasons.png) |
+| 02 | [Catalogue, menu, product](design/reference/02-catalogue-menu-product.png) |
+| 03 | [Mobile](design/reference/03-mobile.png) |
+| 04 | [Bag, checkout, account](design/reference/04-bag-checkout-account.png) — also the only approved source for order tracking UI |
+| 05 | [Studio and administration](design/reference/05-admin.png) |
+| 06 | [Packaging](design/reference/06-packaging.png) |
 
-These are reference concepts, not pixel-perfect implementation files. Source artwork is retained unchanged. Incidental claims, prices, customers, material descriptions and quantities in generated artwork are illustrative, not verified catalogue data.
+These are concept images, not pixel-perfect specs. Products, prices, customers, orders and material claims (e.g. "organic", "linen") in them are illustrative and must not be published as real data. All tracking redraws made after board 04 were rejected.
 
-## Current decisions
+## Repository structure
 
-- Name: Pipolune. Planned domain discussed: pipolune.shop; ownership and availability are not verified by this archive.
-- Languages EN/TR/RU; prices TRY; calendar Europe/Istanbul.
-- Continuous woodland: spring upper right, summer lower right, autumn lower left, winter upper left. Winter includes snow and red berries.
-- Custom lettering: P without an R-like leg, star on i, curled p and leaf terminal e. Final vector/font production remains outstanding.
-- Product photos must preserve real garment colours and material appearance.
-- Initial public mode is a demand-testing showcase. Checkout designs do not authorize activating payments.
+```
+docs/brand/        approved brand style
+docs/uiux/         UI/UX specification (Markdown + original PDF)
+docs/product/      website/product brief
+design/reference/  concept boards 00–06
+archive/source/    original source files (docx)
+public/            static assets served as-is (logo, favicon, .htaccess)
+src/               website source (Astro)
+  i18n/ui.ts       all EN/TR/RU interface text
+  styles/          design tokens and global CSS
+  pages/[lang]/    localized pages → /en/, /tr/, /ru/
+.github/workflows/ build + deploy to the cPanel server
+```
 
-## IMPORTANT: rejected tracking revisions
+`public/brand/wordmark-concept.png` and the favicon are cut from the concept board. They are placeholders until the final vector logo is drawn.
 
-All tracking redraws produced after board 04 were rejected by the user. The tracking PDF and its associated images are retained **only as history**, never as approved UI. Tracking must inherit the exact component system from board 04. Older documents may predate this decision; this note and the UI/UX foundation take precedence for tracking.
+## Development
 
-## Structure
+Requires Node.js 22+.
 
-- `docs/`: working brand and UX specifications.
-- `design/reference/`: selected direction and six reference boards.
-- `archive/`: previous documents, generated images, experiments and generation scripts. Presence in archive does not imply approval.
-- `MANIFEST.json`: file sizes and SHA-256 hashes.
+```bash
+npm install
+npm run dev       # http://localhost:4321
+npm run build     # static site in dist/
+npm run preview   # serve dist/ locally
+```
 
-The early `archive/early-experiments/index.html` is the old Merhaba Seçki experiment, not the current Pipolune website. There is intentionally no root index.html or automatic deployment configuration.
+Add or edit text in `src/i18n/ui.ts` for all three languages at once. Colours and spacing are CSS variables in `src/styles/tokens.css`; use them instead of raw hex values.
 
-Private account-verification screenshots, payment screenshots, chat screenshots, temporary renders, credentials and transfer helpers are excluded. This is the available project workspace archive, not an export of every historical chat or remote Drive file.
+## Workflow
 
-Prepared 25 October 2026. Target repository: https://github.com/ersanjt/pipolune
+- `main` is the live branch. Every push to `main` builds the site and deploys it to the server.
+- Pull before you start (`git pull --rebase`), commit small changes with clear messages, push when done.
+- For larger changes, open a branch and pull request — the build runs on every PR without deploying.
+- Never commit passwords, server credentials, invoices or personal data. Local-only files go in `private/` (git-ignored).
+
+## Deployment
+
+GitHub Actions (`.github/workflows/deploy.yml`) builds the site and uploads `dist/` to the cPanel account over FTPS. It needs these repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|---|---|
+| `FTP_SERVER` | `92.205.182.143` |
+| `FTP_USERNAME` | cPanel FTP account, e.g. `deploy@pipolune.com` |
+| `FTP_PASSWORD` | password of that FTP account |
+| `FTP_SERVER_DIR` | optional, default `public_html/` |
+
+Until the secrets are set, the build still runs and the deploy step is skipped with a warning.
+
+Hosting: cPanel (user `pipolune`, shared IP `92.205.182.143`, Apache). DNS: Cloudflare.
