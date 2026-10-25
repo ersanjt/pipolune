@@ -1,6 +1,8 @@
 import type { ComponentChildren } from 'preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { api } from '../lib/api';
+import { currencies, type Currency } from '../lib/currency';
+import { money } from '../lib/format';
 import type { User } from '../lib/session';
 import type { StudioDictionary, StudioLang } from './i18n';
 
@@ -71,8 +73,14 @@ export function Badge({ value, label }: { value: string; label: string }) {
   return <span class={`s-badge s-badge--${value}`}>{label}</span>;
 }
 
-export function tryMoney(kurus: number): string {
-  return '₺' + new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 }).format(kurus / 100);
+export function amount(minor: number, currency: Currency, lang: StudioLang): string {
+  return money(minor, lang, currency);
+}
+
+/** "$49 · ₺1.890 · 4 490 ₽" — a product's three hand-set prices, or a customer's spend per currency. */
+export function amounts(values: Partial<Record<Currency, number>>, lang: StudioLang): string {
+  const parts = currencies.filter((c) => values[c]).map((c) => money(values[c]!, lang, c));
+  return parts.length ? parts.join(' · ') : '—';
 }
 
 export function shortDate(iso: string | null | undefined, lang: StudioLang): string {

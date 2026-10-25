@@ -61,10 +61,10 @@ final class Cart
         Db::run('DELETE FROM carts WHERE id = ?', [$guest]);
     }
 
-    public static function view(string $locale): array
+    public static function view(string $locale, string $currency): array
     {
         $id = self::id(false);
-        $items = $id ? self::items($id, $locale) : [];
+        $items = $id ? self::items($id, $locale, $currency) : [];
         $subtotal = 0;
         $count = 0;
         foreach ($items as $item) {
@@ -75,16 +75,17 @@ final class Cart
             'items' => $items,
             'count' => $count,
             'subtotal' => $subtotal,
-            'currency' => 'TRY',
+            'currency' => $currency,
             'ready' => $items && !array_filter($items, static fn ($i) => !$i['available']),
         ];
     }
 
-    public static function items(int $cartId, string $locale): array
+    public static function items(int $cartId, string $locale, string $currency): array
     {
+        $column = Money::COLUMN[$currency] ?? throw new \InvalidArgumentException("Unknown currency $currency");
         $rows = Db::all(
             "SELECT ci.quantity, v.id AS variant_id, v.sku, v.colour, v.size, v.stock, v.active AS variant_active,
-                    COALESCE(v.price_kurus, p.price_kurus) AS unit_price, p.id AS product_id, p.slug, p.image, p.status,
+                    p.$column AS unit_price, p.id AS product_id, p.slug, p.image, p.status,
                     COALESCE(t.name, te.name, p.slug) AS name, COALESCE(t.subtitle, te.subtitle, '') AS subtitle
              FROM cart_items ci
              JOIN product_variants v ON v.id = ci.variant_id
@@ -107,7 +108,9 @@ final class Cart
             'size' => $r['size'],
             'quantity' => (int) $r['quantity'],
             'unitPrice' => (int) $r['unit_price'],
-            'available' => $r['status'] === 'active' && $r['variant_active'] && (int) $r['stock'] >= (int) $r['quantity'],
+            'currency' => $currency,
+            'available' => $r['status'] === 'active' && $r['variant_active'] && (int) $r['stock'] >= (int) $r['quantity']
+                && (int) $r['unit_price'] > 0,
         ], $rows);
     }
 

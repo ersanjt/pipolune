@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api } from '../lib/api';
 import { money } from '../lib/format';
+import { currentCurrency } from '../lib/currency';
 import { getSession, updateSession, type Session } from '../lib/session';
 import { errorText, shop } from '../i18n/shop';
 import type { Locale } from '../i18n/ui';
@@ -29,8 +30,10 @@ export default function Checkout({ lang }: { lang: Locale }) {
     marketing: false,
   });
 
+  const currency = currentCurrency(lang);
+
   useEffect(() => {
-    Promise.all([api<CartView>(`/cart?locale=${lang}`), getSession()])
+    Promise.all([api<CartView>(`/cart?locale=${lang}&currency=${currency}`), getSession()])
       .then(async ([c, s]) => {
         setCart(c);
         setSession(s);
@@ -77,7 +80,8 @@ export default function Checkout({ lang }: { lang: Locale }) {
   }
 
   const v = form.values;
-  const shipping = session.settings.shippingStandard;
+  const shipping = session.settings.shippingStandard[cart.currency] ?? null;
+  const price = (minor: number) => money(minor, lang, cart.currency);
 
   function requireAddress(): Record<string, string> {
     const missing: Record<string, string> = {};
@@ -88,7 +92,7 @@ export default function Checkout({ lang }: { lang: Locale }) {
 
   async function placeRequest() {
     await form.submit(async () => {
-      const res = await api<{ number: string; token: string }>('/checkout', { method: 'POST', body: { ...v, locale: lang } });
+      const res = await api<{ number: string; token: string }>('/checkout', { method: 'POST', body: { ...v, locale: lang, currency: cart!.currency } });
       updateSession({ cartCount: 0 });
       location.href = `/${lang}/order/?n=${encodeURIComponent(res.number)}&t=${encodeURIComponent(res.token)}&new=1`;
     });
@@ -107,21 +111,21 @@ export default function Checkout({ lang }: { lang: Locale }) {
                 {i.colour} · {i.size} · {t.qty} {i.quantity}
               </p>
             </div>
-            <span>{money(i.unitPrice * i.quantity, lang)}</span>
+            <span>{price(i.unitPrice * i.quantity)}</span>
           </li>
         ))}
       </ul>
       <div class="summary-row">
         <span>{t.subtotal}</span>
-        <span>{money(cart.subtotal, lang)}</span>
+        <span>{price(cart.subtotal)}</span>
       </div>
       <div class="summary-row">
         <span>{t.delivery}</span>
-        <span>{shipping === null ? t.toBeConfirmed : money(shipping, lang)}</span>
+        <span>{shipping === null ? t.toBeConfirmed : price(shipping)}</span>
       </div>
       <div class="summary-row summary-row--total">
         <span>{t.total}</span>
-        <span>{money(cart.subtotal + (shipping ?? 0), lang)}</span>
+        <span>{price(cart.subtotal + (shipping ?? 0))}</span>
       </div>
     </aside>
   );
@@ -186,7 +190,7 @@ export default function Checkout({ lang }: { lang: Locale }) {
               <input type="radio" name="delivery" checked readOnly />
               <span>
                 <strong>{t.deliveryStandard}</strong>
-                <span class="muted">{shipping === null ? t.deliveryConfirmed : money(shipping, lang)}</span>
+                <span class="muted">{shipping === null ? t.deliveryConfirmed : price(shipping)}</span>
               </span>
             </label>
             <Field label={t.noteOptional} name="note" multiline value={v.note} onInput={form.set('note')} error={form.errors.note} />

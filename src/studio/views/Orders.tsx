@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api, ApiError } from '../../lib/api';
-import { Badge, dateTime, ErrorNote, Loading, PageHead, Pager, Panel, shortDate, tryMoney, useApi, type Ctx } from '../shared';
+import { amount, Badge, dateTime, ErrorNote, Loading, PageHead, Pager, Panel, shortDate, useApi, type Ctx } from '../shared';
+import type { Currency } from '../../lib/currency';
 
 export interface OrderSummary {
   number: string;
@@ -10,6 +11,7 @@ export interface OrderSummary {
   status: string;
   paymentStatus: string;
   fulfilmentStatus: string;
+  currency: Currency;
   total: number;
   itemCount: number;
 }
@@ -20,6 +22,7 @@ interface OrderFull {
   status: string;
   paymentStatus: string;
   fulfilmentStatus: string;
+  currency: Currency;
   subtotal: number;
   shipping: number | null;
   total: number;
@@ -64,7 +67,7 @@ export function OrderTable({ ctx, orders }: { ctx: Ctx; orders: OrderSummary[] }
               <div class="s-muted">{o.email}</div>
             </td>
             <td>{o.itemCount}</td>
-            <td>{tryMoney(o.total)}</td>
+            <td>{amount(o.total, o.currency, lang)}</td>
             <td>
               <Badge value={o.status} label={t.orderStatus[o.status]} />
             </td>
@@ -192,18 +195,18 @@ export function OrderPage({ ctx, number }: { ctx: Ctx; number: string }) {
                       </div>
                     </td>
                     <td>× {i.quantity}</td>
-                    <td>{tryMoney(i.unitPrice * i.quantity)}</td>
+                    <td>{amount(i.unitPrice * i.quantity, order.currency, lang)}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr>
                   <td colSpan={3}>{t.delivery}</td>
-                  <td>{order.shipping === null ? '—' : tryMoney(order.shipping)}</td>
+                  <td>{order.shipping === null ? '—' : amount(order.shipping, order.currency, lang)}</td>
                 </tr>
                 <tr>
                   <th colSpan={3}>{t.total}</th>
-                  <th>{tryMoney(order.total)}</th>
+                  <th>{amount(order.total, order.currency, lang)}</th>
                 </tr>
               </tfoot>
             </table>

@@ -28,28 +28,33 @@ $router->get('/catalog/{slug}', static function (array $p) {
     return Catalog::bySlug($p['slug'], locale(Http::query('locale'))) ?? throw ApiError::notFound('product_not_found');
 });
 
-$router->get('/cart', static fn () => Cart::view(locale(Http::query('locale'))));
+$cartView = static function (mixed $locale, mixed $currency): array {
+    $locale = locale(is_string($locale) ? $locale : null);
+    return Cart::view($locale, Money::pick($currency, $locale));
+};
 
-$router->post('/cart/items', static function () {
+$router->get('/cart', static fn () => $cartView(Http::query('locale'), Http::query('currency')));
+
+$router->post('/cart/items', static function () use ($cartView) {
     $in = Input::body();
     $variant = $in->int('variantId', 1, required: true);
     $qty = $in->int('quantity', 1, Cart::MAX_QTY) ?? 1;
     $in->check();
     Cart::set($variant, $qty, true);
-    return Cart::view(locale($in->raw('locale')));
+    return $cartView($in->raw('locale'), $in->raw('currency'));
 });
 
-$router->patch('/cart/items/{variant}', static function (array $p) {
+$router->patch('/cart/items/{variant}', static function (array $p) use ($cartView) {
     $in = Input::body();
     $qty = $in->int('quantity', 0, Cart::MAX_QTY, true);
     $in->check();
     Cart::set((int) $p['variant'], $qty, false);
-    return Cart::view(locale($in->raw('locale')));
+    return $cartView($in->raw('locale'), $in->raw('currency'));
 });
 
-$router->delete('/cart/items/{variant}', static function (array $p) {
+$router->delete('/cart/items/{variant}', static function (array $p) use ($cartView) {
     Cart::remove((int) $p['variant']);
-    return Cart::view(locale(Http::query('locale')));
+    return $cartView(Http::query('locale'), Http::query('currency'));
 });
 
 $router->post('/checkout', static function () {

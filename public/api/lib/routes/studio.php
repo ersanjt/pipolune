@@ -183,7 +183,7 @@ $router->patch('/studio/settings', static function () {
     if ($in->has('catalog_preview')) {
         $values['catalog_preview'] = $in->bool('catalog_preview');
     }
-    $ownerOnly = ['sales_mode', 'shipping_standard_kurus'];
+    $ownerOnly = ['sales_mode', 'shipping_standard'];
     if (array_intersect($ownerOnly, array_keys(Http::body())) && $user['role'] !== 'owner') {
         throw new ApiError(403, 'forbidden', 'Only an owner can change sales settings.');
     }
@@ -193,8 +193,16 @@ $router->patch('/studio/settings', static function () {
             $in->fail('sales_mode', 'payment_provider_missing');
         }
     }
-    if ($in->has('shipping_standard_kurus')) {
-        $values['shipping_standard_kurus'] = $in->int('shipping_standard_kurus', 0, 10_000_000);
+    if ($in->has('shipping_standard')) {
+        $shipping = Http::body()['shipping_standard'];
+        $values['shipping_standard'] = [];
+        foreach (Money::CURRENCIES as $currency) {
+            $value = is_array($shipping) ? ($shipping[$currency] ?? null) : null;
+            if ($value !== null && (!is_int($value) || $value < 0 || $value > 10_000_000)) {
+                $in->fail("shipping_standard.$currency", 'invalid');
+            }
+            $values['shipping_standard'][$currency] = $value;
+        }
     }
     $in->check();
     Settings::set($values);

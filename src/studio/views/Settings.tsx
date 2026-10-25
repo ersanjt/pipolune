@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { api, ApiError } from '../../lib/api';
 import { can, dateTime, ErrorNote, Loading, PageHead, Panel, useApi, type Ctx } from '../shared';
 import { useSettings } from './Content';
+import { currencies, currencySymbol, type Currency } from '../../lib/currency';
 
 export function PublishButton({ ctx }: { ctx: Ctx }) {
   const { t } = ctx;
@@ -44,11 +45,11 @@ export default function Settings({ ctx }: { ctx: Ctx }) {
   const { t } = ctx;
   const owner = can.owner(ctx.me);
   const { data, error, patch, message } = useSettings(ctx);
-  const [shipping, setShipping] = useState<string | null>(null);
+  const [shipping, setShipping] = useState<Partial<Record<Currency, string>>>({});
   if (error) return <ErrorNote ctx={ctx} />;
   if (!data) return <Loading ctx={ctx} />;
   const s = data.settings;
-  const shippingValue = shipping ?? (s.shipping_standard_kurus === null ? '' : String(s.shipping_standard_kurus / 100));
+  const shippingValue = (c: Currency) => shipping[c] ?? (s.shipping_standard?.[c] == null ? '' : String(s.shipping_standard[c]! / 100));
 
   return (
     <>
@@ -78,12 +79,18 @@ export default function Settings({ ctx }: { ctx: Ctx }) {
             class="s-stack"
             onSubmit={(e) => {
               e.preventDefault();
-              patch({ shipping_standard_kurus: shippingValue === '' ? null : Math.round(Number(shippingValue) * 100) });
-              setShipping(null);
+              const next = Object.fromEntries(currencies.map((c) => [c, shippingValue(c) === '' ? null : Math.round(Number(shippingValue(c)) * 100)]));
+              patch({ shipping_standard: next as Record<Currency, number | null> });
+              setShipping({});
             }}
           >
             <fieldset class="s-stack s-fieldset" disabled={!owner}>
-              <input type="number" min="0" step="0.01" value={shippingValue} onInput={(e) => setShipping(e.currentTarget.value)} aria-label={t.shipping} />
+              {currencies.map((c) => (
+                <label>
+                  {currencySymbol[c]} {c}
+                  <input type="number" min="0" step="0.01" value={shippingValue(c)} onInput={(e) => setShipping({ ...shipping, [c]: e.currentTarget.value })} />
+                </label>
+              ))}
               <p class="s-muted">{t.shippingHelp}</p>
               <button class="s-btn" type="submit">
                 {t.save}

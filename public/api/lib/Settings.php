@@ -15,7 +15,7 @@ final class Settings
         'season_mode' => 'auto',
         'manual_season' => 'spring',
         'homepage_mode' => 'seasonal',
-        'shipping_standard_kurus' => null,
+        'shipping_standard' => ['TRY' => null, 'USD' => null, 'RUB' => null],
         'catalog_preview' => true,
     ];
 
@@ -53,6 +53,13 @@ final class Settings
         self::$cache = null;
     }
 
+    /** Standard delivery in the order currency (minor units); null means it is confirmed by email. */
+    public static function shipping(string $currency): ?int
+    {
+        $value = self::get('shipping_standard')[$currency] ?? null;
+        return $value === null ? null : (int) $value;
+    }
+
     /** Season by the Europe/Istanbul calendar unless Studio pins one. Night is 19:00–06:59. */
     public static function season(): array
     {
@@ -76,7 +83,7 @@ final class Settings
     {
         return [
             'salesMode' => self::get('sales_mode'),
-            'shippingStandard' => self::get('shipping_standard_kurus'),
+            'shippingStandard' => self::get('shipping_standard'),
             'catalogPreview' => (bool) self::get('catalog_preview'),
             'homepageMode' => self::get('homepage_mode'),
         ] + self::season();

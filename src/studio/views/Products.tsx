@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api, ApiError, upload } from '../../lib/api';
-import { Badge, can, ErrorNote, Loading, PageHead, Panel, tryMoney, useApi, type Ctx } from '../shared';
+import { amounts, Badge, can, ErrorNote, Loading, PageHead, Panel, useApi, type Ctx } from '../shared';
+import { currencies, currencySymbol, type Prices } from '../../lib/currency';
 import { PublishButton } from './Settings';
 
 const LOCALES = ['en', 'tr', 'ru'] as const;
@@ -11,7 +12,6 @@ interface Variant {
   colour: string;
   size: string;
   stock: number;
-  price: number | null;
   active: boolean;
 }
 
@@ -23,7 +23,7 @@ interface Product {
   category: string;
   gender: string;
   ageBand: string;
-  price: number;
+  prices: Prices;
   image: string;
   sortOrder: number;
   translations: Partial<Record<(typeof LOCALES)[number], { name: string; subtitle: string; description: string }>>;
@@ -71,7 +71,7 @@ export default function Products({ ctx }: { ctx: Ctx }) {
                   <div class="s-muted">{p.slug}</div>
                 </td>
                 <td>{t.seasons[p.season]}</td>
-                <td>{tryMoney(p.price)}</td>
+                <td>{amounts(p.prices, ctx.lang)}</td>
                 <td>{p.variants.filter((v) => v.active).reduce((n, v) => n + v.stock, 0)}</td>
                 <td>{LOCALES.map((l) => (p.translations[l]?.name ? '✓' : '–')).join(' · ')}</td>
                 <td>
@@ -93,7 +93,7 @@ const EMPTY: Omit<Product, 'id'> = {
   category: '',
   gender: 'unisex',
   ageBand: '',
-  price: 0,
+  prices: { USD: 0, TRY: 0, RUB: 0 },
   image: '',
   sortOrder: 0,
   translations: { en: { name: '', subtitle: '', description: '' } },
@@ -193,7 +193,7 @@ export function ProductEditor({ ctx, id }: { ctx: Ctx; id: number | null }) {
             </div>
           </Panel>
 
-          <Panel title={t.variants} action={<button type="button" class="s-btn s-btn--ghost" onClick={() => set({ variants: [...product.variants, { sku: '', colour: '', size: '', stock: 0, price: null, active: true }] })}>+ {t.addVariant}</button>}>
+          <Panel title={t.variants} action={<button type="button" class="s-btn s-btn--ghost" onClick={() => set({ variants: [...product.variants, { sku: '', colour: '', size: '', stock: 0, active: true }] })}>+ {t.addVariant}</button>}>
             <table class="s-table s-table--edit">
               <thead>
                 <tr>
@@ -201,7 +201,6 @@ export function ProductEditor({ ctx, id }: { ctx: Ctx; id: number | null }) {
                   <th>{t.colour}</th>
                   <th>{t.size}</th>
                   <th>{t.stock}</th>
-                  <th>{t.priceOverride}</th>
                   <th>{t.active}</th>
                   <th />
                 </tr>
@@ -221,9 +220,6 @@ export function ProductEditor({ ctx, id }: { ctx: Ctx; id: number | null }) {
                     </td>
                     <td>
                       <input type="number" min="0" value={v.stock} onInput={(e) => setVariant(i, { stock: Number(e.currentTarget.value) })} />
-                    </td>
-                    <td>
-                      <input type="number" min="0" step="0.01" value={v.price === null ? '' : v.price / 100} onInput={(e) => setVariant(i, { price: e.currentTarget.value === '' ? null : Math.round(Number(e.currentTarget.value) * 100) })} />
                     </td>
                     <td>
                       <input type="checkbox" checked={v.active} onChange={(e) => setVariant(i, { active: e.currentTarget.checked })} />
@@ -257,11 +253,24 @@ export function ProductEditor({ ctx, id }: { ctx: Ctx; id: number | null }) {
                 <span class="s-muted">{t.slugHelp}</span>
                 {err('slug')}
               </label>
-              <label>
-                {t.price}
-                <input type="number" min="0" step="0.01" value={product.price / 100} onInput={(e) => set({ price: Math.round(Number(e.currentTarget.value) * 100) })} required />
-                {err('price')}
-              </label>
+              <fieldset class="s-stack s-prices">
+                <legend>{t.price}</legend>
+                {currencies.map((c) => (
+                  <label>
+                    {currencySymbol[c]} {c}
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={product.prices[c] ? product.prices[c] / 100 : ''}
+                      onInput={(e) => set({ prices: { ...product.prices, [c]: Math.round(Number(e.currentTarget.value) * 100) } })}
+                      required
+                    />
+                    {err(`prices.${c}`)}
+                  </label>
+                ))}
+                <span class="s-muted">{t.pricesHelp}</span>
+              </fieldset>
               <label>
                 {t.season}
                 <select value={product.season} onChange={(e) => set({ season: e.currentTarget.value })}>

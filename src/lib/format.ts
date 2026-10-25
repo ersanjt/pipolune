@@ -1,14 +1,15 @@
 import type { Locale } from '../i18n/ui';
+import type { Currency } from './currency';
 
 const intlLocale: Record<Locale, string> = { en: 'en-GB', tr: 'tr-TR', ru: 'ru-RU' };
 
-/** Prices are kuruş. English follows the boards ("TRY 1,190"); Turkish and Russian use ₺. */
-export function money(kurus: number, lang: Locale): string {
-  const value = kurus / 100;
+/** Amounts are minor units (kuruş, cents, kopecks). English lira prices follow the boards ("TRY 1,190"). Mirrors Money::format in PHP. */
+export function money(minor: number, lang: Locale, currency: Currency): string {
+  const value = minor / 100;
   return new Intl.NumberFormat(intlLocale[lang], {
     style: 'currency',
-    currency: 'TRY',
-    currencyDisplay: lang === 'en' ? 'code' : 'symbol',
+    currency,
+    currencyDisplay: lang === 'en' && currency === 'TRY' ? 'code' : 'narrowSymbol',
     minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
     maximumFractionDigits: 2,
   })

@@ -1,0 +1,31 @@
+---
+import { money } from '../lib/format';
+import { defaultCurrency, type Prices } from '../lib/currency';
+import type { Locale } from '../i18n/ui';
+
+interface Props {
+  prices: Prices;
+  lang: Locale;
+  class?: string;
+}
+
+const { prices, lang, class: className } = Astro.props;
+const currency = defaultCurrency[lang];
+---
+
+<span class={className} data-prices={JSON.stringify(prices)} data-lang={lang}>{money(prices[currency], lang, currency)}</span>
+
+<script>
+  import { currentCurrency } from '../lib/currency';
+  import { money } from '../lib/format';
+  import { isLocale } from '../i18n/ui';
+
+  // Static HTML carries the language's default currency (what search engines index); a saved choice replaces it here.
+  for (const el of document.querySelectorAll<HTMLElement>('[data-prices]')) {
+    const lang = el.dataset.lang;
+    if (!isLocale(lang)) continue;
+    const currency = currentCurrency(lang);
+    const prices = JSON.parse(el.dataset.prices ?? '{}');
+    if (prices[currency]) el.textContent = money(prices[currency], lang, currency);
+  }
+</script>

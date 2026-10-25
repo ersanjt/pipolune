@@ -1,10 +1,11 @@
-import { Badge, ErrorNote, Loading, PageHead, Panel, shortDate, tryMoney, useApi, type Ctx } from '../shared';
+import { amount, amounts, Badge, ErrorNote, Loading, PageHead, Panel, shortDate, useApi, type Ctx } from '../shared';
+import type { Currency, Prices } from '../../lib/currency';
 
 interface OverviewData {
   counts: Record<string, number>;
-  recentOrders: { number: string; createdAt: string; name: string; itemCount: number; total: number; status: string; fulfilmentStatus: string }[];
+  recentOrders: { number: string; createdAt: string; name: string; itemCount: number; currency: Currency; total: number; status: string; fulfilmentStatus: string }[];
   lowStock: { id: number; sku: string; colour: string; size: string; stock: number }[];
-  latestProducts: { id: number; image: string; translations: Record<string, { name: string }>; price: number }[];
+  latestProducts: { id: number; image: string; name?: string; translations?: Record<string, { name: string }>; prices: Prices }[];
   languageCompleteness: Record<string, { products: number; of: number }>;
   settings: { salesMode: string; season: string; night: boolean };
 }
@@ -79,7 +80,7 @@ export default function Overview({ ctx }: { ctx: Ctx }) {
                     <td>{shortDate(o.createdAt, lang)}</td>
                     <td>{o.name}</td>
                     <td>{o.itemCount}</td>
-                    <td>{tryMoney(o.total)}</td>
+                    <td>{amount(o.total, o.currency, lang)}</td>
                     <td>
                       <Badge value={o.status} label={t.orderStatus[o.status]} />
                     </td>
@@ -124,12 +125,12 @@ export default function Overview({ ctx }: { ctx: Ctx }) {
       <div class="s-grid s-grid--2-1">
         <Panel title={t.latestProducts} action={<a href="#/products">{t.viewAll} →</a>}>
           <ul class="s-products">
-            {data.latestProducts.map((p: any) => (
+            {data.latestProducts.map((p) => (
               <li>
                 <a href={`#/products/${p.id}`}>
                   <img src={p.image} alt="" width="160" height="128" loading="lazy" />
                   <span>{p.name ?? p.translations?.en?.name}</span>
-                  <span class="s-muted">{tryMoney(p.price)}</span>
+                  <span class="s-muted">{amounts(p.prices, lang)}</span>
                 </a>
               </li>
             ))}

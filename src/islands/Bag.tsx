@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api, ApiError } from '../lib/api';
 import { money, plural } from '../lib/format';
+import { currentCurrency, type Currency } from '../lib/currency';
 import { getSession, updateSession, type Session } from '../lib/session';
 import { errorText, shop } from '../i18n/shop';
 import type { Locale } from '../i18n/ui';
@@ -17,6 +18,7 @@ export interface CartItem {
   size: string;
   quantity: number;
   unitPrice: number;
+  currency: Currency;
   available: boolean;
 }
 
@@ -24,6 +26,7 @@ export interface CartView {
   items: CartItem[];
   count: number;
   subtotal: number;
+  currency: Currency;
   ready: boolean;
 }
 
@@ -35,8 +38,10 @@ export default function Bag({ lang }: { lang: Locale }) {
   const [error, setError] = useState('');
   const [asking, setAsking] = useState(false);
 
+  const currency = currentCurrency(lang);
+
   useEffect(() => {
-    api<CartView>(`/cart?locale=${lang}`).then(setCart).catch((e) => setError(errorText(lang, e.code)));
+    api<CartView>(`/cart?locale=${lang}&currency=${currency}`).then(setCart).catch((e) => setError(errorText(lang, e.code)));
     getSession().then(setSession).catch(() => {});
   }, []);
 
@@ -50,8 +55,8 @@ export default function Bag({ lang }: { lang: Locale }) {
     try {
       const next =
         quantity <= 0
-          ? await api<CartView>(`/cart/items/${item.variantId}?locale=${lang}`, { method: 'DELETE' })
-          : await api<CartView>(`/cart/items/${item.variantId}`, { method: 'PATCH', body: { quantity, locale: lang } });
+          ? await api<CartView>(`/cart/items/${item.variantId}?locale=${lang}&currency=${currency}`, { method: 'DELETE' })
+          : await api<CartView>(`/cart/items/${item.variantId}`, { method: 'PATCH', body: { quantity, locale: lang, currency } });
       setCart(next);
       updateSession({ cartCount: next.count });
     } catch (e) {
@@ -90,7 +95,7 @@ export default function Bag({ lang }: { lang: Locale }) {
               <p class="muted">
                 {item.subtitle} · {item.colour} · {item.size}
               </p>
-              <p>{money(item.unitPrice, lang)}</p>
+              <p>{money(item.unitPrice, lang, item.currency)}</p>
               {!item.available && <p class="field__error">{t.unavailable}</p>}
               <div class="qty" role="group" aria-label={t.quantity}>
                 <button type="button" onClick={() => change(item, item.quantity - 1)} aria-label={t.decrease}>
@@ -117,7 +122,7 @@ export default function Bag({ lang }: { lang: Locale }) {
       <aside class="bag__summary card">
         <div class="summary-row summary-row--strong">
           <span>{t.estimatedSubtotal}</span>
-          <span>{money(cart.subtotal, lang)}</span>
+          <span>{money(cart.subtotal, lang, cart.currency)}</span>
         </div>
         <p class="muted">{t.deliveryNextStep}</p>
         {error && <Notice tone="error">{error}</Notice>}

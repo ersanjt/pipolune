@@ -370,6 +370,19 @@ fieldset {
   border: 0;
 }
 
+.s-prices {
+  margin: 0;
+  padding: var(--space-3, 12px);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.s-prices legend {
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .s-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

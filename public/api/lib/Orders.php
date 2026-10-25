@@ -35,10 +35,11 @@ final class Orders
         $in->check();
 
         $cartId = Cart::id(false) ?? throw new ApiError(409, 'cart_empty', 'Your bag is empty.');
-        $shipping = Settings::get('shipping_standard_kurus');
+        $currency = Money::pick($data['currency'] ?? null, $locale);
+        $shipping = Settings::shipping($currency);
 
-        $order = Db::tx(static function () use ($cartId, $locale, $user, $email, $phone, $note, $marketing, $address, $shipping) {
-            $items = Cart::items($cartId, $locale);
+        $order = Db::tx(static function () use ($cartId, $locale, $currency, $user, $email, $phone, $note, $marketing, $address, $shipping) {
+            $items = Cart::items($cartId, $locale, $currency);
             if (!$items) {
                 throw new ApiError(409, 'cart_empty', 'Your bag is empty.');
             }
@@ -60,9 +61,10 @@ final class Orders
                 'email' => $email,
                 'phone' => $phone,
                 'locale' => $locale,
-                'subtotal_kurus' => $subtotal,
-                'shipping_kurus' => $shipping,
-                'total_kurus' => $subtotal + (int) $shipping,
+                'currency' => $currency,
+                'subtotal' => $subtotal,
+                'shipping' => $shipping,
+                'total' => $subtotal + (int) $shipping,
                 'marketing_opt_in' => $marketing ? 1 : 0,
                 'customer_note' => $note,
                 'access_token_hash' => '',
@@ -79,7 +81,7 @@ final class Orders
                     'colour' => $item['colour'],
                     'size' => $item['size'],
                     'image' => $item['image'],
-                    'unit_price_kurus' => $item['unitPrice'],
+                    'unit_price' => $item['unitPrice'],
                     'quantity' => $item['quantity'],
                 ]);
             }
@@ -97,19 +99,19 @@ final class Orders
         $token = self::token($order['number']);
         $link = self::link($order['number'], $token, $locale);
         $lines = implode("\n", array_map(
-            static fn ($i) => "• {$i['name']} ({$i['colour']}, {$i['size']}) × {$i['quantity']} — " . self::money($i['unitPrice'] * $i['quantity']),
+            static fn ($i) => "• {$i['name']} ({$i['colour']}, {$i['size']}) × {$i['quantity']} — " . Money::format($i['unitPrice'] * $i['quantity'], $currency),
             $order['items'],
         ));
         Mailer::template('order_requested', $locale, $email, [
             'name' => $address['shipping_name'],
             'number' => $order['number'],
-            'total' => self::money($order['total']),
-            'items' => Mailer::itemLines($order['items']),
+            'total' => Money::format($order['total'], $currency, $locale),
+            'items' => Mailer::itemLines($order['items'], $locale),
             'link' => $link,
         ]);
         Mailer::notifyTeam(
             "New order request {$order['number']}",
-            "{$address['shipping_name']} <$email>\n\n$lines\n\nSubtotal: " . self::money($order['subtotal']),
+            "{$address['shipping_name']} <$email>\n\n$lines\n\nSubtotal: " . Money::format($order['subtotal'], $currency),
         );
         return ['number' => $order['number'], 'token' => $token];
     }
@@ -123,11 +125,6 @@ final class Orders
     public static function link(string $number, string $token, string $locale): string
     {
         return config('app.url') . "/$locale/order/?n=" . rawurlencode($number) . '&t=' . rawurlencode($token);
-    }
-
-    public static function money(int $kurus): string
-    {
-        return 'TRY ' . number_format($kurus / 100, $kurus % 100 ? 2 : 0, '.', ',');
     }
 
     public static function event(int $orderId, string $type, string $message, bool $visible, ?int $authorId): void
@@ -177,7 +174,8 @@ final class Orders
             'status' => $o['status'],
             'paymentStatus' => $o['payment_status'],
             'fulfilmentStatus' => $o['fulfilment_status'],
-            'total' => (int) $o['total_kurus'],
+            'currency' => $o['currency'],
+            'total' => (int) $o['total'],
             'itemCount' => (int) Db::value('SELECT COALESCE(SUM(quantity), 0) FROM order_items WHERE order_id = ?', [$o['id']]),
             'firstItem' => $first,
         ];
@@ -191,7 +189,8 @@ final class Orders
             'colour' => $i['colour'],
             'size' => $i['size'],
             'image' => $i['image'],
-            'unitPrice' => (int) $i['unit_price_kurus'],
+            'unitPrice' => (int) $i['unit_price'],
+            'currency' => $o['currency'],
             'quantity' => (int) $i['quantity'],
         ], Db::all('SELECT * FROM order_items WHERE order_id = ? ORDER BY id', [$o['id']]));
         $eventWhere = $staff ? '' : 'AND e.visible_to_customer = 1';
@@ -210,9 +209,9 @@ final class Orders
             'paymentStatus' => $o['payment_status'],
             'fulfilmentStatus' => $o['fulfilment_status'],
             'currency' => $o['currency'],
-            'subtotal' => (int) $o['subtotal_kurus'],
-            'shipping' => $o['shipping_kurus'] === null ? null : (int) $o['shipping_kurus'],
-            'total' => (int) $o['total_kurus'],
+            'subtotal' => (int) $o['subtotal'],
+            'shipping' => $o['shipping'] === null ? null : (int) $o['shipping'],
+            'total' => (int) $o['total'],
             'email' => $o['email'],
             'phone' => $o['phone'],
             'address' => [

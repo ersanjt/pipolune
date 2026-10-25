@@ -2,6 +2,7 @@
 // appear after "Publish"; falls back to the seed file when the API is unreachable (first deploy, offline).
 import seedData from '../../public/api/lib/seed/catalog.json';
 import type { Locale } from '../i18n/ui';
+import type { Prices } from './currency';
 
 export interface ProductText {
   name: string;
@@ -16,7 +17,7 @@ export interface CatalogProduct {
   category: string;
   gender: string;
   ageBand: string;
-  price: number;
+  prices: Prices;
   image: string;
   translations: Partial<Record<Locale, ProductText>>;
   variants: { sku: string; colour: string; size: string }[];
@@ -38,6 +39,7 @@ async function fetchLive(): Promise<CatalogProduct[]> {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   if (!Array.isArray(data.products) || data.products.length === 0) throw new Error('empty catalogue');
+  if (!data.products.every((p: any) => p.prices && p.prices.USD > 0)) throw new Error('catalogue without USD/TRY/RUB prices');
   return data.products;
 }
 
@@ -49,7 +51,7 @@ function seed(): CatalogProduct[] {
     category: p.category,
     gender: p.gender,
     ageBand: p.age_band,
-    price: p.price_kurus,
+    prices: p.prices,
     image: p.image,
     translations: p.translations,
     variants: p.variants,

@@ -37,30 +37,39 @@ foreach ($files as $file) {
     echo "applied $version\n";
 }
 
-if ((int) Db::value('SELECT COUNT(*) FROM products') === 0) {
-    $seed = json_decode(file_get_contents(dirname(__DIR__) . '/seed/catalog.json'), true, flags: JSON_THROW_ON_ERROR);
-    Db::tx(static function () use ($seed): void {
-        foreach ($seed['products'] as $i => $p) {
-            $id = Db::insert('products', [
-                'slug' => $p['slug'],
-                'status' => 'active',
-                'season' => $p['season'],
-                'category' => $p['category'],
-                'gender' => $p['gender'],
-                'age_band' => $p['age_band'],
-                'price_kurus' => $p['price_kurus'],
-                'image' => $p['image'],
-                'sort_order' => $i,
-            ]);
-            foreach ($p['translations'] as $locale => $t) {
-                Db::insert('product_translations', ['product_id' => $id, 'locale' => $locale] + $t);
-            }
-            foreach ($p['variants'] as $v) {
-                Db::insert('product_variants', ['product_id' => $id] + $v);
-            }
+// Seed products are added once, matched by slug; after that Studio owns them (archived ones stay archived).
+$seed = json_decode(file_get_contents(dirname(__DIR__) . '/seed/catalog.json'), true, flags: JSON_THROW_ON_ERROR);
+$added = Db::tx(static function () use ($seed): array {
+    $added = [];
+    foreach ($seed['products'] as $i => $p) {
+        if (Db::value('SELECT id FROM products WHERE slug = ?', [$p['slug']])) {
+            continue;
         }
-    });
-    echo 'seeded ' . count($seed['products']) . " products\n";
+        $id = Db::insert('products', [
+            'slug' => $p['slug'],
+            'status' => $p['status'] ?? 'active',
+            'season' => $p['season'],
+            'category' => $p['category'],
+            'gender' => $p['gender'],
+            'age_band' => $p['age_band'],
+            'price_try' => $p['prices']['TRY'],
+            'price_usd' => $p['prices']['USD'],
+            'price_rub' => $p['prices']['RUB'],
+            'image' => $p['image'],
+            'sort_order' => $p['sort_order'] ?? $i,
+        ]);
+        foreach ($p['translations'] as $locale => $t) {
+            Db::insert('product_translations', ['product_id' => $id, 'locale' => $locale] + $t);
+        }
+        foreach ($p['variants'] as $v) {
+            Db::insert('product_variants', ['product_id' => $id] + $v);
+        }
+        $added[] = $p['slug'];
+    }
+    return $added;
+});
+if ($added) {
+    echo 'added products: ' . implode(', ', $added) . "\n";
 }
 
 echo "database up to date\n";

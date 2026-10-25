@@ -1,4 +1,5 @@
 import { api } from './api';
+import type { Currency } from './currency';
 
 export interface User {
   id: number;
@@ -17,7 +18,7 @@ export interface Session {
   wishlist: number[];
   settings: {
     salesMode: 'off' | 'request' | 'live';
-    shippingStandard: number | null;
+    shippingStandard: Record<Currency, number | null>;
     catalogPreview: boolean;
     season: 'spring' | 'summer' | 'autumn' | 'winter';
     night: boolean;

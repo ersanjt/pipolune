@@ -1,4 +1,5 @@
 import { money, date, dateTime } from '../lib/format';
+import type { Currency } from '../lib/currency';
 import { shop } from '../i18n/shop';
 import type { Locale } from '../i18n/ui';
 
@@ -8,6 +9,7 @@ export interface Order {
   status: string;
   paymentStatus: string;
   fulfilmentStatus: string;
+  currency: Currency;
   subtotal: number;
   shipping: number | null;
   total: number;
@@ -22,6 +24,7 @@ export interface Order {
 /** Order card from board 04: number, date, items, totals, and payment/delivery as separate statuses. */
 export default function OrderDetail({ lang, order }: { lang: Locale; order: Order }) {
   const t = shop[lang];
+  const price = (minor: number) => money(minor, lang, order.currency);
   return (
     <div class="order-detail">
       <div class="order-detail__head card">
@@ -73,21 +76,21 @@ export default function OrderDetail({ lang, order }: { lang: Locale; order: Orde
                     {i.colour} · {i.size} · {t.qty} {i.quantity}
                   </p>
                 </div>
-                <span>{money(i.unitPrice * i.quantity, lang)}</span>
+                <span>{price(i.unitPrice * i.quantity)}</span>
               </li>
             ))}
           </ul>
           <div class="summary-row">
             <span>{t.subtotal}</span>
-            <span>{money(order.subtotal, lang)}</span>
+            <span>{price(order.subtotal)}</span>
           </div>
           <div class="summary-row">
             <span>{t.delivery}</span>
-            <span>{order.shipping === null ? t.toBeConfirmed : money(order.shipping, lang)}</span>
+            <span>{order.shipping === null ? t.toBeConfirmed : price(order.shipping)}</span>
           </div>
           <div class="summary-row summary-row--total">
             <span>{t.total}</span>
-            <span>{money(order.total, lang)}</span>
+            <span>{price(order.total)}</span>
           </div>
         </section>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api } from '../lib/api';
 import { money, date } from '../lib/format';
+import { currentCurrency, type Currency } from '../lib/currency';
 import { getSession, updateSession, rememberLanguage, type Session, type User } from '../lib/session';
 import { errorText, shop } from '../i18n/shop';
 import { locales, localeNames, type Locale } from '../i18n/ui';
@@ -334,6 +335,7 @@ interface OrderSummary {
   createdAt: string;
   status: string;
   fulfilmentStatus: string;
+  currency: Currency;
   total: number;
   itemCount: number;
   firstItem: { name: string; image: string } | null;
@@ -351,7 +353,7 @@ function OrderRow({ lang, o }: { lang: Locale; o: OrderSummary }) {
           <span class="muted">{date(o.createdAt, lang)}</span>
         </span>
         <span class={`badge badge--${o.status === 'confirmed' ? o.fulfilmentStatus : o.status}`}>{label}</span>
-        <span>{money(o.total, lang)}</span>
+        <span>{money(o.total, lang, o.currency)}</span>
         <span aria-hidden="true">›</span>
       </a>
     </li>
@@ -359,12 +361,13 @@ function OrderRow({ lang, o }: { lang: Locale; o: OrderSummary }) {
 }
 
 function ProductTile({ lang, p }: { lang: Locale; p: any }) {
+  const currency = currentCurrency(lang);
   return (
     <li class="tile">
       <a href={`/${lang}/shop/${p.slug}/`}>
         <img src={p.image} alt="" width="200" height="200" loading="lazy" />
         <span class="tile__name">{p.name}</span>
-        <span class="muted">{money(p.price, lang)}</span>
+        <span class="muted">{money(p.prices[currency], lang, currency)}</span>
       </a>
     </li>
   );

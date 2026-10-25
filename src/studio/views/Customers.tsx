@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { api } from '../../lib/api';
-import { Badge, can, dateTime, ErrorNote, Loading, PageHead, Pager, Panel, shortDate, tryMoney, useApi, type Ctx } from '../shared';
+import { amounts, Badge, can, dateTime, ErrorNote, Loading, PageHead, Pager, Panel, shortDate, useApi, type Ctx } from '../shared';
+import type { Currency } from '../../lib/currency';
 import { OrderTable, type OrderSummary } from './Orders';
 
 interface Customer {
@@ -10,7 +11,7 @@ interface Customer {
   emailVerified: boolean;
   marketing: boolean;
   orderCount: number;
-  totalSpent: number;
+  spent: Partial<Record<Currency, number>>;
   lastOrderAt: string | null;
   leadCount: number;
   firstSeen: string;
@@ -100,7 +101,7 @@ export default function Customers({ ctx }: { ctx: Ctx }) {
                   </td>
                   <td>{c.hasAccount ? t.yes : '—'}</td>
                   <td>{c.orderCount}</td>
-                  <td>{c.totalSpent ? tryMoney(c.totalSpent) : '—'}</td>
+                  <td>{amounts(c.spent, lang)}</td>
                   <td>{shortDate(c.lastOrderAt, lang)}</td>
                   <td>{c.leadCount || '—'}</td>
                   <td>{c.marketing ? '✓' : ''}</td>
@@ -162,7 +163,7 @@ export function CustomerPage({ ctx, email }: { ctx: Ctx; email: string }) {
         </div>
         <div class="s-stat">
           <span class="s-muted">{t.spent}</span>
-          <strong>{tryMoney(c.totalSpent)}</strong>
+          <strong>{amounts(c.spent, lang)}</strong>
         </div>
         <div class="s-stat">
           <span class="s-muted">{t.lastOrder}</span>

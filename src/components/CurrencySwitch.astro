@@ -1,0 +1,153 @@
+---
+import Icon from './Icon.astro';
+import { currencies, currencySymbol, defaultCurrency } from '../lib/currency';
+import type { Locale } from '../i18n/ui';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const label = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[lang];
+const current = defaultCurrency[lang];
+---
+
+<div class="currency-switch" data-open="false" data-lang={lang}>
+  <button class="currency-switch__toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="currency-menu">
+    <span class="currency-switch__symbol" data-currency-symbol>{currencySymbol[current]}</span>
+    <span class="currency-switch__chevron" aria-hidden="true"><Icon name="chevron" size={14} /></span>
+    <span class="visually-hidden">{label}</span>
+  </button>
+  <div id="currency-menu" class="currency-switch__menu" role="group" aria-label={label}>
+    {
+      currencies.map((code) => (
+        <button type="button" data-currency={code} aria-pressed={code === current ? 'true' : 'false'}>
+          <span class="currency-switch__mark" aria-hidden="true">{currencySymbol[code]}</span>
+          {code}
+        </button>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  import { chooseCurrency, currencySymbol, currentCurrency, isCurrency } from '../lib/currency';
+  import { isLocale } from '../i18n/ui';
+
+  const root = document.querySelector<HTMLElement>('.currency-switch');
+  const toggle = root?.querySelector<HTMLButtonElement>('.currency-switch__toggle');
+  const options = [...(root?.querySelectorAll<HTMLButtonElement>('[data-currency]') ?? [])];
+  const lang = root?.dataset.lang;
+
+  if (root && toggle && isLocale(lang)) {
+    const active = currentCurrency(lang);
+    root.querySelector('[data-currency-symbol]')!.textContent = currencySymbol[active];
+    options.forEach((o) => o.setAttribute('aria-pressed', String(o.dataset.currency === active)));
+
+    const setOpen = (open: boolean) => {
+      root.dataset.open = String(open);
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+    document.addEventListener('click', (e) => {
+      if (e.target instanceof Node && !root.contains(e.target)) setOpen(false);
+    });
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && root.dataset.open === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    options.forEach((o) =>
+      o.addEventListener('click', () => {
+        const code = o.dataset.currency;
+        setOpen(false);
+        if (!isCurrency(code) || code === active) return;
+        chooseCurrency(code);
+        location.reload();
+      }),
+    );
+  }
+</script>
+
+<style>
+  .currency-switch {
+    position: relative;
+    z-index: 2;
+  }
+
+  .currency-switch__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    height: var(--control-height);
+    padding: 0 var(--space-2);
+    color: var(--color-forest);
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .currency-switch__symbol {
+    min-width: 1ch;
+    font-family: var(--font-text);
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .currency-switch__chevron {
+    display: inline-flex;
+    transition: transform 160ms ease;
+  }
+
+  .currency-switch[data-open='true'] .currency-switch__chevron {
+    transform: rotate(180deg);
+  }
+
+  .currency-switch__menu {
+    display: none;
+    position: absolute;
+    top: calc(100% - 4px);
+    right: 0;
+    min-width: 128px;
+    padding: var(--space-2) 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .currency-switch[data-open='true'] .currency-switch__menu {
+    display: block;
+  }
+
+  .currency-switch__menu button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0 var(--space-4);
+    font: inherit;
+    font-size: 1.0625rem;
+    color: var(--color-forest);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .currency-switch__menu button:hover,
+  .currency-switch__menu button[aria-pressed='true'] {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .currency-switch__menu button[aria-pressed='true'] {
+    font-weight: 500;
+  }
+
+  .currency-switch__mark {
+    width: 1.25ch;
+    text-align: center;
+  }
+</style>

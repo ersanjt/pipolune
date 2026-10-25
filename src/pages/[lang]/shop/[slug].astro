@@ -57,7 +57,7 @@ const jsonLd = [
       <div class="product__info">
         <h1>{copy.name}</h1>
         <p class="product__subtitle">{copy.subtitle}</p>
-        <ProductBuy client:load lang={lang} slug={product.slug} price={product.price} variants={product.variants} />
+        <ProductBuy client:load lang={lang} slug={product.slug} prices={product.prices} variants={product.variants} />
         {copy.description && <p class="product__description">{copy.description}</p>}
         <p class="product__note"><span aria-hidden="true">✦</span> {t.previewNote}</p>
       </div>

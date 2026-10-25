@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { api, ApiError } from '../../lib/api';
 import { ErrorNote, Loading, PageHead, Panel, useApi, type Ctx } from '../shared';
+import type { Currency } from '../../lib/currency';
 import { PublishButton } from './Settings';
 
 export interface SettingsResponse {
@@ -9,7 +10,7 @@ export interface SettingsResponse {
     season_mode: string;
     manual_season: string;
     homepage_mode: string;
-    shipping_standard_kurus: number | null;
+    shipping_standard: Record<Currency, number | null>;
     catalog_preview: boolean;
   };
   season: { season: string; mode: string; night: boolean };

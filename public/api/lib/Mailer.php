@@ -39,7 +39,7 @@ final class Mailer
     }
 
     /** @param list<array<string, mixed>> $items */
-    public static function itemLines(array $items): array
+    public static function itemLines(array $items, string $locale = 'en'): array
     {
         $lines = [];
         foreach ($items as $item) {
@@ -56,7 +56,7 @@ final class Mailer
             $qty = max(1, (int) ($item['qty'] ?? $item['quantity'] ?? 1));
             $price = (string) ($item['price'] ?? '');
             if ($price === '' && isset($item['unitPrice'])) {
-                $price = Orders::money((int) $item['unitPrice'] * $qty);
+                $price = Money::format((int) $item['unitPrice'] * $qty, (string) ($item['currency'] ?? 'TRY'), $locale);
             }
             $lines[] = [
                 'name' => (string) ($item['name'] ?? ''),
@@ -154,7 +154,7 @@ final class Mailer
         foreach ($rows as $row) {
             $lang = locale($row['locale']);
             $items = array_values(array_filter(
-                Cart::items((int) $row['id'], $lang),
+                Cart::items((int) $row['id'], $lang, Money::forLocale($lang)),
                 static fn (array $item) => $item['available'],
             ));
             if (!$items) {
@@ -165,7 +165,7 @@ final class Mailer
                 if (self::enqueue('cart_reminder', $lang, $row['email'], [
                     'name' => $row['name'],
                     'link' => self::origin() . "/$lang/bag/",
-                    'items' => self::itemLines($items),
+                    'items' => self::itemLines($items, $lang),
                 ], 'cart:' . $row['id'] . ':' . $row['updated_at'])) {
                     $queued++;
                 }
@@ -300,7 +300,7 @@ final class Mailer
                 'name' => $person['name'],
                 'product_name' => $copy['name'],
                 'product_subtitle' => $copy['subtitle'],
-                'product_price' => Orders::money((int) $product['price_kurus']),
+                'product_price' => Money::format(Money::prices($product)[Money::forLocale($lang)], Money::forLocale($lang), $lang),
                 'product_image' => $product['image'],
                 'link' => self::origin() . "/$lang/shop/" . rawurlencode($product['slug']) . '/',
             ], 'product:' . $productId . ':' . $person['email'], gmdate('Y-m-d H:i:s', time() + $delayMinutes * 60))) {

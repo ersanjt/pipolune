@@ -52,7 +52,6 @@ final class Catalog
                 'sku' => $v['sku'],
                 'colour' => $v['colour'],
                 'size' => $v['size'],
-                'price' => $v['price_kurus'] === null ? null : (int) $v['price_kurus'],
                 'available' => (int) $v['stock'] > 0,
             ];
             if ($staff) {
@@ -70,7 +69,7 @@ final class Catalog
                 'category' => $p['category'],
                 'gender' => $p['gender'],
                 'ageBand' => $p['age_band'],
-                'price' => (int) $p['price_kurus'],
+                'prices' => Money::prices($p),
                 'image' => $p['image'],
                 'variants' => $variants[$p['id']] ?? [],
             ];
@@ -101,10 +100,17 @@ final class Catalog
             'category' => $in->str('category', 40) ?? '',
             'gender' => $in->oneOf('gender', self::GENDERS) ?? 'unisex',
             'age_band' => $in->str('ageBand', 20) ?? '',
-            'price_kurus' => $in->int('price', 0, 100_000_000, true),
             'image' => $in->str('image', 255) ?? '',
             'sort_order' => $in->int('sortOrder', -9999, 9999) ?? 0,
         ];
+        foreach (Money::COLUMN as $currency => $column) {
+            $value = $data['prices'][$currency] ?? null;
+            if (!is_int($value) || $value < 1 || $value > 100_000_000) {
+                $in->fail("prices.$currency", 'required');
+                continue;
+            }
+            $row[$column] = $value;
+        }
         $translations = is_array($data['translations'] ?? null) ? $data['translations'] : [];
         if (trim((string) ($translations['en']['name'] ?? '')) === '') {
             $in->fail('translations.en.name', 'required');
@@ -146,7 +152,6 @@ final class Catalog
                     'colour' => mb_substr(trim((string) ($v['colour'] ?? '')), 0, 60),
                     'size' => mb_substr(trim((string) ($v['size'] ?? '')), 0, 20),
                     'stock' => max(0, (int) ($v['stock'] ?? 0)),
-                    'price_kurus' => isset($v['price']) && $v['price'] !== '' && $v['price'] !== null ? max(0, (int) $v['price']) : null,
                     'active' => !isset($v['active']) || $v['active'] ? 1 : 0,
                 ];
                 $existing = isset($v['id']) ? Db::value('SELECT id FROM product_variants WHERE id = ? AND product_id = ?', [(int) $v['id'], $id]) : null;

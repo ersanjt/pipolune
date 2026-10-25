@@ -1,13 +1,46 @@
 {
-  "_note": "Initial catalogue (illustrative products from design/reference/00). Loaded once into an empty database by bin/migrate.php; afterwards products are managed in Studio. Prices in kuruş.",
+  "_note": "Catalogue seed. bin/migrate.php adds any product whose slug is not in the database yet; afterwards products are managed in Studio. Prices are minor units per currency (kuruş, cents, kopecks). Meadow Dress, Forest Cardigan and Willow Blouse are illustrative products from design/reference/00.",
   "products": [
+    {
+      "slug": "acorn-hooded-jumpsuit",
+      "sort_order": -10,
+      "season": "winter",
+      "category": "jumpsuit",
+      "gender": "unisex",
+      "age_band": "3-24m",
+      "prices": { "TRY": 189000, "USD": 4900, "RUB": 449000 },
+      "image": "/images/products/acorn-hooded-jumpsuit.webp",
+      "translations": {
+        "en": {
+          "name": "Acorn Hooded Jumpsuit",
+          "subtitle": "Warm faux-suede jumpsuit with a hood",
+          "description": "A thick, warm one-piece for autumn and winter outings. Soft brown faux-suede outer with cream pile trim and lining, a cosy hood, front buttons, two patch pockets and snaps along the legs for easy changes. Outer: 100% synthetic. Sizes by height: 66 cm (57–64 cm, 4.5–6.5 kg), 73 cm (64–73 cm, 7–9 kg), 80 cm (68–78 cm, 9.5–12 kg), 90 cm (78–88 cm, 11–14 kg). If in doubt, choose the larger size."
+        },
+        "tr": {
+          "name": "Acorn Hooded Jumpsuit",
+          "subtitle": "Kapüşonlu, süet görünümlü sıcak tulum",
+          "description": "Sonbahar ve kış gezmeleri için kalın, sıcak tek parça tulum. Yumuşak kahverengi süet görünümlü dış yüzey, krem tüylü kenarlar ve astar, sıcacık kapüşon, önden düğmeli kapanış, iki cep ve kolay alt değiştirme için bacak boyunca çıtçıtlar. Dış kumaş: %100 sentetik. Boya göre bedenler: 66 cm (57–64 cm, 4,5–6,5 kg), 73 cm (64–73 cm, 7–9 kg), 80 cm (68–78 cm, 9,5–12 kg), 90 cm (78–88 cm, 11–14 kg). Kararsız kalırsanız bir büyük bedeni seçin."
+        },
+        "ru": {
+          "name": "Acorn Hooded Jumpsuit",
+          "subtitle": "Тёплый комбинезон под замшу с капюшоном",
+          "description": "Плотный тёплый комбинезон для прогулок осенью и зимой. Мягкий коричневый верх под замшу, кремовая отделка и подкладка из искусственного меха, уютный капюшон, пуговицы спереди, два накладных кармана и кнопки по штанинам для удобного переодевания. Верх: 100% синтетика. Размеры по росту: 66 см (57–64 см, 4,5–6,5 кг), 73 см (64–73 см, 7–9 кг), 80 см (68–78 см, 9,5–12 кг), 90 см (78–88 см, 11–14 кг). Если сомневаетесь, берите размер больше."
+        }
+      },
+      "variants": [
+        { "sku": "PL-ACJ-BRN-66", "colour": "Brown", "size": "66 cm", "stock": 0 },
+        { "sku": "PL-ACJ-BRN-73", "colour": "Brown", "size": "73 cm", "stock": 0 },
+        { "sku": "PL-ACJ-BRN-80", "colour": "Brown", "size": "80 cm", "stock": 0 },
+        { "sku": "PL-ACJ-BRN-90", "colour": "Brown", "size": "90 cm", "stock": 0 }
+      ]
+    },
     {
       "slug": "meadow-dress",
       "season": "spring",
       "category": "dress",
       "gender": "girl",
       "age_band": "1-4y",
-      "price_kurus": 129000,
+      "prices": { "TRY": 129000, "USD": 3500, "RUB": 299000 },
       "image": "/images/home/product-meadow-dress.webp",
       "translations": {
         "en": { "name": "Meadow Dress", "subtitle": "Dress in blossom", "description": "A soft everyday dress with a small blossom print and gathered sleeves." },
@@ -26,7 +59,7 @@
       "category": "cardigan",
       "gender": "unisex",
       "age_band": "1-5y",
-      "price_kurus": 119000,
+      "prices": { "TRY": 119000, "USD": 3200, "RUB": 279000 },
       "image": "/images/home/product-forest-cardigan.webp",
       "translations": {
         "en": { "name": "Forest Cardigan", "subtitle": "Knit cardigan in sage", "description": "A chunky knit cardigan in sage green with wooden-look buttons." },
@@ -45,7 +78,7 @@
       "category": "blouse",
       "gender": "girl",
       "age_band": "1-4y",
-      "price_kurus": 99000,
+      "prices": { "TRY": 99000, "USD": 2700, "RUB": 229000 },
       "image": "/images/home/product-willow-blouse.webp",
       "translations": {
         "en": { "name": "Willow Blouse", "subtitle": "Blouse in blush", "description": "A light blouse in blush pink with frilled shoulders." },

@@ -16,7 +16,9 @@ final class Customers
                u.id AS user_id, u.locale AS account_locale, u.email_verified_at,
                (u.marketing_opt_in = 1 OR EXISTS (SELECT 1 FROM orders o3 WHERE o3.email = c.email AND o3.marketing_opt_in = 1)) AS marketing,
                (SELECT COUNT(*) FROM orders o WHERE o.email = c.email AND o.status <> 'cancelled') AS order_count,
-               (SELECT COALESCE(SUM(o.total_kurus), 0) FROM orders o WHERE o.email = c.email AND o.status IN ('confirmed','completed')) AS total_spent,
+               (SELECT COALESCE(SUM(o.total), 0) FROM orders o WHERE o.email = c.email AND o.currency = 'TRY' AND o.status IN ('confirmed','completed')) AS spent_try,
+               (SELECT COALESCE(SUM(o.total), 0) FROM orders o WHERE o.email = c.email AND o.currency = 'USD' AND o.status IN ('confirmed','completed')) AS spent_usd,
+               (SELECT COALESCE(SUM(o.total), 0) FROM orders o WHERE o.email = c.email AND o.currency = 'RUB' AND o.status IN ('confirmed','completed')) AS spent_rub,
                (SELECT MAX(o.created_at) FROM orders o WHERE o.email = c.email) AS last_order_at,
                (SELECT COUNT(*) FROM leads l WHERE l.email = c.email) AS lead_count,
                c.first_seen
@@ -61,7 +63,7 @@ final class Customers
             'emailVerified' => $r['email_verified_at'] !== null,
             'marketing' => (bool) $r['marketing'],
             'orderCount' => (int) $r['order_count'],
-            'totalSpent' => (int) $r['total_spent'],
+            'spent' => array_filter(['TRY' => (int) $r['spent_try'], 'USD' => (int) $r['spent_usd'], 'RUB' => (int) $r['spent_rub']]),
             'lastOrderAt' => iso($r['last_order_at']),
             'leadCount' => (int) $r['lead_count'],
             'firstSeen' => iso($r['first_seen']),
@@ -131,10 +133,14 @@ final class Customers
         header('Cache-Control: no-store, private');
         $out = fopen('php://output', 'w');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['email', 'name', 'account', 'marketing_opt_in', 'orders', 'total_spent_try', 'last_order', 'enquiries', 'first_seen']);
+        fputcsv($out, ['email', 'name', 'account', 'marketing_opt_in', 'orders', 'spent_try', 'spent_usd', 'spent_rub', 'last_order', 'enquiries', 'first_seen']);
         foreach (Db::all("SELECT * FROM (" . self::BASE . ") x ORDER BY x.first_seen") as $r) {
             $c = self::row($r);
-            fputcsv($out, [$c['email'], $c['name'], $c['hasAccount'] ? 'yes' : 'no', $c['marketing'] ? 'yes' : 'no', $c['orderCount'], $c['totalSpent'] / 100, $c['lastOrderAt'], $c['leadCount'], $c['firstSeen']]);
+            fputcsv($out, [
+                $c['email'], $c['name'], $c['hasAccount'] ? 'yes' : 'no', $c['marketing'] ? 'yes' : 'no', $c['orderCount'],
+                ($c['spent']['TRY'] ?? 0) / 100, ($c['spent']['USD'] ?? 0) / 100, ($c['spent']['RUB'] ?? 0) / 100,
+                $c['lastOrderAt'], $c['leadCount'], $c['firstSeen'],
+            ]);
         }
         exit;
     }
