@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "deploy": "node --env-file-if-exists=.env.deploy scripts/deploy.mjs",
+    "brand:assets": "python scripts/brand-assets.py"
   },
   "engines": {
     "node": ">=22.23.4"

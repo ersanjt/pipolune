@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Verify build output
+        run: test -f dist/index.html && test -f dist/.htaccess
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          include-hidden-files: true
+          retention-days: 7
+
+  deploy:
+    name: Deploy to cPanel
+    needs: [check]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://pipolune.com
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    env:
+      HAS_DEPLOY_KEY: ${{ secrets.SFTP_KEY != '' }}
+    steps:
+      - name: Skip when deploy secrets are missing
+        if: env.HAS_DEPLOY_KEY != 'true'
+        run: echo "::warning::SFTP_HOST / SFTP_USER / SFTP_KEY / SFTP_KNOWN_HOSTS are not set; deploy skipped. See README → Deployment."
+      - uses: actions/checkout@v5
+        if: env.HAS_DEPLOY_KEY == 'true'
+      - uses: actions/setup-node@v5
+        if: env.HAS_DEPLOY_KEY == 'true'
+        with:
+          node-version: 24
+      - uses: actions/download-artifact@v4
+        if: env.HAS_DEPLOY_KEY == 'true'
+        with:
+          name: dist
+          path: dist
+      - name: Install deploy key
+        if: env.HAS_DEPLOY_KEY == 'true'
+        env:
+          SFTP_KEY: ${{ secrets.SFTP_KEY }}
+          SFTP_KNOWN_HOSTS: ${{ secrets.SFTP_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SFTP_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          install -m 600 /dev/null "$RUNNER_TEMP/deploy_key"
+          printf '%s\n' "$SFTP_KEY" > "$RUNNER_TEMP/deploy_key"
+      - run: node scripts/deploy.mjs
+        if: env.HAS_DEPLOY_KEY == 'true'
+        env:
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_USER: ${{ secrets.SFTP_USER }}
+          SFTP_KEY_PATH: ${{ runner.temp }}/deploy_key
+          SFTP_PORT: "22"
+          SFTP_REMOTE: public_html
+      - run: rm -f "$RUNNER_TEMP/deploy_key"
+        if: always()
