@@ -83,6 +83,31 @@ $router->post('/leads', static function () {
         $row['product_id'] = null;
     }
     Db::insert('leads', $row);
+    if ($row['source'] === 'newsletter') {
+        Db::run("DELETE FROM mail_suppressions WHERE email = ? AND category = 'marketing'", [$row['email']]);
+        Mailer::template('newsletter', $row['locale'], $row['email'], ['name' => $row['name']]);
+    } else {
+        Mailer::template('enquiry_received', $row['locale'], $row['email'], ['name' => $row['name']]);
+    }
     Mailer::notifyTeam("New enquiry from {$row['email']}", "Source: {$row['source']}\nLanguage: {$row['locale']}\n\n" . ($row['message'] ?? ''));
+    return ['ok' => true];
+});
+
+$router->post('/mail/unsubscribe', static function () {
+    $email = mb_strtolower(trim((string) (Http::query('email') ?? '')));
+    $token = trim((string) (Http::query('token') ?? ''));
+    if ($email === '' || $token === '') {
+        $data = json_decode(file_get_contents('php://input') ?: '', true);
+        if (is_array($data)) {
+            $email = mb_strtolower(trim((string) ($data['email'] ?? $email)));
+            $token = trim((string) ($data['token'] ?? $token));
+        }
+    }
+    $expected = filter_var($email, FILTER_VALIDATE_EMAIL) ? Mailer::unsubscribeToken($email) : '';
+    if ($expected === '' || $token === '' || !hash_equals($expected, $token)) {
+        throw new ApiError(403, 'forbidden', 'This unsubscribe link is not valid.');
+    }
+    Mailer::suppress($email, 'marketing', 'unsubscribe');
+    Db::run('UPDATE users SET marketing_opt_in = 0 WHERE email = ?', [$email]);
     return ['ok' => true];
 });

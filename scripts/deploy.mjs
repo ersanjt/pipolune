@@ -50,6 +50,31 @@ function migrateDatabase() {
   }
 }
 
+// Queues new-product letters after the rebuilt pages are on the server. Does not fail the deploy.
+function queueProductMail() {
+  const res = ssh(`${PHP} ${REMOTE}/api/lib/bin/mail-announce.php`);
+  process.stdout.write(res.stdout || "");
+  if (res.status !== 0) {
+    process.stderr.write(res.stderr || "");
+    console.warn("Could not queue new-product emails.");
+  }
+}
+
+// One line in the cPanel user's crontab. The script itself is quiet when there is nothing to send.
+function ensureMailCron() {
+  const command = [
+    'mkdir -p "$HOME/logs"',
+    `( crontab -l 2>/dev/null | grep -v "api/lib/bin/mail-cron.php" || true; echo "*/5 * * * * ${PHP} \\$HOME/${REMOTE}/api/lib/bin/mail-cron.php >> \\$HOME/logs/mail-cron.log 2>&1" ) | crontab -`,
+  ].join(" && ");
+  const res = ssh(command);
+  if (res.status !== 0) {
+    process.stderr.write(res.stderr || res.stdout || "");
+    console.warn("Could not install the mail cron.");
+    return;
+  }
+  console.log("Mail cron installed.");
+}
+
 // cPanel's ea-nginx proxy caches pages (it kept serving an empty "Index of /" after the first upload).
 function clearServerCache() {
   const res = ssh("uapi NginxCaching clear_cache");
@@ -99,6 +124,8 @@ try {
   ]);
   console.log(`Deployed ${files.length} files to ${REMOTE}.`);
   migrateDatabase();
+  ensureMailCron();
+  queueProductMail();
   clearServerCache();
 } finally {
   rmSync(work, { recursive: true, force: true });

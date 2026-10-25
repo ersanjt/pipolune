@@ -29,6 +29,7 @@ final class Staff
         }
         $token = Auth::createToken($id, 'reset', 72 * 3600);
         Mailer::template('invite', $locale, $email, [
+            'name' => is_array($user) ? (string) $user['name'] : '',
             'role' => $role,
             'link' => config('app.url') . "/$locale/account/reset/?token=$token",
             'studio' => config('app.url') . '/studio/',

@@ -58,6 +58,10 @@ final class Http
         if (in_array(self::method(), ['GET', 'HEAD', 'OPTIONS'], true)) {
             return;
         }
+        // One-click unsubscribe from a mailbox (RFC 8058). The HMAC token is the authorization.
+        if (self::method() === 'POST' && self::path() === '/mail/unsubscribe') {
+            return;
+        }
         if (($_SERVER['HTTP_X_PIPOLUNE'] ?? '') !== '1') {
             throw new ApiError(403, 'forbidden', 'Missing request header.');
         }

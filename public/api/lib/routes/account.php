@@ -5,11 +5,18 @@ namespace Pipolune;
 
 /** @var Router $router */
 
-$sendVerification = static function (array $user): void {
+$sendVerification = static function (array $user, string $template = 'verify'): void {
     $token = Auth::createToken((int) $user['id'], 'verify', 48 * 3600);
-    Mailer::template('verify', $user['locale'], $user['email'], [
+    Mailer::template($template, $user['locale'], $user['email'], [
         'name' => $user['name'],
         'link' => config('app.url') . "/{$user['locale']}/account/verify/?token=$token",
+    ]);
+};
+
+$sendPasswordChanged = static function (array $user): void {
+    Mailer::template('password_changed', $user['locale'], $user['email'], [
+        'name' => $user['name'],
+        'link' => config('app.url') . "/{$user['locale']}/account/sign-in/",
     ]);
 };
 
@@ -35,7 +42,7 @@ $router->post('/auth/register', static function () use ($sendVerification) {
     // Guest orders placed with this email become visible in the new account.
     Db::run('UPDATE orders SET user_id = ? WHERE email = ? AND user_id IS NULL', [$id, $email]);
     $user = Db::one('SELECT * FROM users WHERE id = ?', [$id]);
-    $sendVerification($user);
+    $sendVerification($user, 'welcome');
     Auth::login($user);
     return ['user' => Auth::publicUser($user)];
 });
@@ -100,7 +107,7 @@ $router->post('/auth/forgot', static function () {
     return ['ok' => true];
 });
 
-$router->post('/auth/reset', static function () {
+$router->post('/auth/reset', static function () use ($sendPasswordChanged) {
     $in = Input::body();
     $token = $in->str('token', 128, true);
     $password = $in->password();
@@ -112,6 +119,7 @@ $router->post('/auth/reset', static function () {
     );
     Auth::logoutEverywhere($userId);
     $user = Db::one('SELECT * FROM users WHERE id = ?', [$userId]);
+    $sendPasswordChanged($user);
     Auth::login($user);
     return ['user' => Auth::publicUser($user)];
 });
@@ -144,10 +152,17 @@ $router->patch('/account', static function () {
     }
     $in->check();
     Db::update('users', $changes, ['id' => $user['id']]);
+    if (array_key_exists('marketing_opt_in', $changes)) {
+        if ($changes['marketing_opt_in']) {
+            Db::run("DELETE FROM mail_suppressions WHERE email = ? AND category = 'marketing'", [$user['email']]);
+        } else {
+            Mailer::suppress($user['email'], 'marketing', 'preference');
+        }
+    }
     return ['user' => Auth::publicUser(Db::one('SELECT * FROM users WHERE id = ?', [$user['id']]))];
 });
 
-$router->post('/account/password', static function () {
+$router->post('/account/password', static function () use ($sendPasswordChanged) {
     $user = Auth::requireUser();
     $in = Input::body();
     $current = $in->str('currentPassword', 200, true);
@@ -158,7 +173,9 @@ $router->post('/account/password', static function () {
     }
     Db::update('users', ['password_hash' => password_hash($new, PASSWORD_DEFAULT)], ['id' => $user['id']]);
     Auth::logoutEverywhere((int) $user['id']);
-    Auth::login(Db::one('SELECT * FROM users WHERE id = ?', [$user['id']]));
+    $fresh = Db::one('SELECT * FROM users WHERE id = ?', [$user['id']]);
+    $sendPasswordChanged($fresh);
+    Auth::login($fresh);
     return ['ok' => true];
 });
 

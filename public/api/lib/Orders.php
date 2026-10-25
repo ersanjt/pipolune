@@ -84,11 +84,14 @@ final class Orders
                 ]);
             }
             self::event($id, 'requested', 'Order request received.', true, null);
-            if ($user && $marketing && !$user['marketing_opt_in']) {
-                Db::run('UPDATE users SET marketing_opt_in = 1 WHERE id = ?', [$user['id']]);
+            if ($marketing) {
+                Db::run("DELETE FROM mail_suppressions WHERE email = ? AND category = 'marketing'", [$email]);
+                if ($user && !$user['marketing_opt_in']) {
+                    Db::run('UPDATE users SET marketing_opt_in = 1 WHERE id = ?', [$user['id']]);
+                }
             }
             Cart::clear($cartId);
-            return ['id' => $id, 'number' => $number, 'items' => $items, 'subtotal' => $subtotal];
+            return ['id' => $id, 'number' => $number, 'items' => $items, 'subtotal' => $subtotal, 'total' => $subtotal + (int) $shipping];
         });
 
         $token = self::token($order['number']);
@@ -100,7 +103,8 @@ final class Orders
         Mailer::template('order_requested', $locale, $email, [
             'name' => $address['shipping_name'],
             'number' => $order['number'],
-            'items' => $lines,
+            'total' => self::money($order['total']),
+            'items' => Mailer::itemLines($order['items']),
             'link' => $link,
         ]);
         Mailer::notifyTeam(
@@ -307,7 +311,7 @@ final class Orders
             $statusText = Mailer::STATUS_TEXT[$key][$fresh['locale']] ?? null;
             if ($statusText) {
                 $token = self::token($fresh['number']);
-                $tracking = $fresh['tracking_number'] ? trim(($fresh['carrier'] ?? '') . ' ' . $fresh['tracking_number']) . "\n" : '';
+                $tracking = $fresh['tracking_number'] ? trim(($fresh['carrier'] ?? '') . ' ' . $fresh['tracking_number']) : '';
                 Mailer::template('order_update', $fresh['locale'], $fresh['email'], [
                     'name' => $fresh['shipping_name'],
                     'number' => $fresh['number'],
