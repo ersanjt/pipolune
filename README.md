@@ -32,6 +32,7 @@ These are concept images, not pixel-perfect specs. Products, prices, customers, 
 docs/brand/        approved brand style
 docs/uiux/         UI/UX specification (Markdown + original PDF)
 docs/product/      website/product brief
+docs/ops/          email, DNS and hosting settings (no passwords)
 design/reference/  concept boards 00–06
 archive/source/    original source files (docx)
 public/            static assets served as-is (logo, favicon, .htaccess)
@@ -77,4 +78,4 @@ GitHub Actions (`.github/workflows/deploy.yml`) builds the site and uploads `dis
 
 Until the secrets are set, the build still runs and the deploy step is skipped with a warning.
 
-Hosting: cPanel (user `pipolune`, shared IP `92.205.182.143`, Apache). DNS: Cloudflare.
+Hosting: cPanel (user `pipolune`, shared IP `92.205.182.143`, Apache). DNS: Cloudflare. Mail settings and required DNS records: [docs/ops/email-and-dns.md](docs/ops/email-and-dns.md).
