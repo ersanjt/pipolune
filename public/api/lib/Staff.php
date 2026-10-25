@@ -14,7 +14,7 @@ final class Staff
             'role' => $u['role'],
             'active' => $u['password_hash'] !== null,
             'lastLoginAt' => iso($u['last_login_at']),
-        ], Db::all("SELECT * FROM users WHERE role <> 'customer' ORDER BY FIELD(role, 'owner', 'editor', 'fulfilment'), email"));
+        ], Db::all("SELECT * FROM users WHERE role <> 'customer' ORDER BY FIELD(role, 'owner', 'manager', 'editor', 'content', 'accountant', 'fulfilment', 'support'), email"));
     }
 
     /** Creates or promotes the account and emails a set-password link (valid 72 hours). */

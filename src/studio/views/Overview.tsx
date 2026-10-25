@@ -1,4 +1,4 @@
-import { amount, amounts, Badge, ErrorNote, Loading, PageHead, Panel, shortDate, useApi, type Ctx } from '../shared';
+import { amount, amounts, Badge, can, ErrorNote, Loading, PageHead, Panel, shortDate, useApi, type Ctx } from '../shared';
 import type { Currency, Prices } from '../../lib/currency';
 
 interface OverviewData {
@@ -7,6 +7,7 @@ interface OverviewData {
   lowStock: { id: number; sku: string; colour: string; size: string; stock: number }[];
   latestProducts: { id: number; image: string; name?: string; translations?: Record<string, { name: string }>; prices: Prices }[];
   languageCompleteness: Record<string, { products: number; of: number }>;
+  revenue?: Partial<Record<Currency, { total: number; orders: number }>> | [];
   settings: { salesMode: string; season: string; night: boolean };
 }
 
@@ -23,6 +24,7 @@ export default function Overview({ ctx }: { ctx: Ctx }) {
     { key: 'inventory', href: '#/inventory' },
     { key: 'orders', href: '#/orders' },
   ];
+  const revenue = Object.entries(Array.isArray(data.revenue) ? {} : (data.revenue ?? {}));
 
   return (
     <>
@@ -38,6 +40,21 @@ export default function Overview({ ctx }: { ctx: Ctx }) {
           </a>
         ))}
       </div>
+
+      {can(ctx.me, 'reports') && (
+        <div class="s-alerts">
+          <span class="s-chip">{t.revenue}:</span>
+          {revenue.length ? (
+            revenue.map(([c, r]) => (
+              <span class="s-chip">
+                <strong>{amount(r!.total, c as Currency, lang)}</strong> · {r!.orders} {t.ordersShort}
+              </span>
+            ))
+          ) : (
+            <span class="s-chip">—</span>
+          )}
+        </div>
+      )}
 
       <div class="s-alerts">
         <a class="s-chip" href="#/orders">
@@ -58,6 +75,7 @@ export default function Overview({ ctx }: { ctx: Ctx }) {
       </div>
 
       <div class="s-grid s-grid--2-1">
+        {can(ctx.me, 'orders.view') && (
         <Panel title={t.recentOrders} action={<a href="#/orders">{t.viewAll} →</a>}>
           {data.recentOrders.length ? (
             <table class="s-table">
@@ -95,6 +113,7 @@ export default function Overview({ ctx }: { ctx: Ctx }) {
             </div>
           )}
         </Panel>
+        )}
 
         <Panel title={t.inventoryBySku} action={<a href="#/inventory">{t.viewAll} →</a>}>
           <table class="s-table">

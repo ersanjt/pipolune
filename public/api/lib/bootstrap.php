@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Pipolune;
 
 const LOCALES = ['en', 'tr', 'ru'];
-const STAFF_ROLES = ['owner', 'editor', 'fulfilment'];
+const STAFF_ROLES = ['owner', 'manager', 'editor', 'content', 'accountant', 'fulfilment', 'support'];
 
 spl_autoload_register(static function (string $class): void {
     if (str_starts_with($class, __NAMESPACE__ . '\\')) {

@@ -3,9 +3,10 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import SiteFooter from '../../../components/SiteFooter.astro';
 import ProductBuy from '../../../islands/ProductBuy';
+import ProductGallery from '../../../islands/ProductGallery';
 import { locales, ui, type Locale } from '../../../i18n/ui';
 import { shop } from '../../../i18n/shop';
-import { loadCatalog, text } from '../../../lib/catalog';
+import { loadCatalog, photos, text } from '../../../lib/catalog';
 
 export async function getStaticPaths() {
   const products = await loadCatalog();
@@ -19,13 +20,20 @@ const s = shop[lang];
 const copy = text(product, lang);
 const path = `shop/${product.slug}/`;
 const site = Astro.site!;
+const gallery = photos(product);
+const specs = copy.specs ?? [];
+const details = (copy.details ?? '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+const chart = product.sizeChart;
+const chartHead = chart ? (chart.head[lang] ?? chart.head.en ?? []) : [];
+const chartNote = chart ? (chart.note[lang] ?? chart.note.en ?? '') : '';
+const features = product.features.map((f) => ({ image: f.image, caption: f.caption[lang] ?? f.caption.en ?? '' }));
 const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: copy.name,
     description: copy.description || copy.subtitle,
-    image: new URL(product.image, site).href,
+    image: gallery.map((src) => new URL(src, site).href),
     brand: { '@type': 'Brand', name: 'Pipolune' },
     sku: product.variants[0]?.sku,
   },
@@ -51,9 +59,7 @@ const jsonLd = [
       <span aria-current="page">{copy.name}</span>
     </nav>
     <article class="product">
-      <div class="product__photo">
-        <img src={product.image} alt={copy.name} width="560" height="448" fetchpriority="high" />
-      </div>
+      <ProductGallery client:load lang={lang} alt={copy.name} photos={gallery} video={product.video} />
       <div class="product__info">
         <h1>{copy.name}</h1>
         <p class="product__subtitle">{copy.subtitle}</p>
@@ -62,6 +68,65 @@ const jsonLd = [
         <p class="product__note"><span aria-hidden="true">✦</span> {t.previewNote}</p>
       </div>
     </article>
+
+    {
+      (details.length > 0 || features.length > 0) && (
+        <section class="product-section" aria-labelledby="details-title">
+          <h2 id="details-title" class="product-section__title">{s.detailsTitle}</h2>
+          {details.length > 0 && <div class="product-details">{details.map((p) => <p>{p}</p>)}</div>}
+          {features.length > 0 && (
+            <ul class="feature-grid" aria-label={s.closeUps}>
+              {features.map((f) => (
+                <li>
+                  <img src={f.image} alt={f.caption} width="729" height="466" loading="lazy" />
+                  {f.caption && <p>{f.caption}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )
+    }
+
+    {
+      (specs.length > 0 || chart) && (
+        <div class="product-facts">
+          {specs.length > 0 && (
+            <section class="product-section" aria-labelledby="specs-title">
+              <h2 id="specs-title" class="product-section__title">{s.specsTitle}</h2>
+              <dl class="spec-list">
+                {specs.map((row) => (
+                  <div>
+                    <dt>{row.label}</dt>
+                    <dd>{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+          {chart && (
+            <section class="product-section" aria-labelledby="size-title">
+              <h2 id="size-title" class="product-section__title">{s.sizeGuide}</h2>
+              <div class="size-table">
+                <table>
+                  {chartHead.length > 0 && (
+                    <thead>
+                      <tr>{chartHead.map((h) => <th scope="col">{h}</th>)}</tr>
+                    </thead>
+                  )}
+                  <tbody>
+                    {chart.rows.map((row) => (
+                      <tr>{row.map((cell, i) => (i === 0 ? <th scope="row">{cell}</th> : <td>{cell}</td>))}</tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {chartNote && <p class="size-note">{chartNote}</p>}
+            </section>
+          )}
+        </div>
+      )
+    }
   </main>
   <SiteFooter lang={lang} />
 </BaseLayout>
@@ -82,18 +147,6 @@ const jsonLd = [
   .product {
     display: grid;
     gap: var(--space-5);
-  }
-
-  .product__photo {
-    background: var(--color-photo);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-  }
-
-  .product__photo img {
-    width: 100%;
-    aspect-ratio: 5 / 4;
-    object-fit: cover;
   }
 
   .product__info {
@@ -122,10 +175,114 @@ const jsonLd = [
     color: var(--color-text-muted);
   }
 
+  .product-section {
+    margin-top: var(--space-7);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-line);
+  }
+
+  .product-section__title {
+    margin-bottom: var(--space-4);
+    font-size: clamp(1.5rem, 3vw, 1.875rem);
+    font-weight: 500;
+  }
+
+  .product-details {
+    display: grid;
+    gap: var(--space-3);
+    max-width: 68ch;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--space-4);
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .feature-grid img {
+    width: 100%;
+    aspect-ratio: 729 / 466;
+    object-fit: cover;
+    background: var(--color-photo);
+    border-radius: var(--radius-md);
+  }
+
+  .feature-grid p {
+    margin-top: var(--space-2);
+    font-size: 0.9375rem;
+  }
+
+  .product-facts {
+    display: grid;
+    gap: 0 var(--space-8);
+  }
+
+  .spec-list {
+    margin: 0;
+  }
+
+  .spec-list div {
+    display: grid;
+    grid-template-columns: minmax(110px, 40%) 1fr;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .spec-list dt {
+    color: var(--color-text-muted);
+  }
+
+  .spec-list dd {
+    margin: 0;
+  }
+
+  .size-table {
+    overflow-x: auto;
+  }
+
+  .size-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+
+  .size-table th,
+  .size-table td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .size-table thead th {
+    font-weight: 500;
+    color: var(--color-text-muted);
+    white-space: normal;
+    vertical-align: bottom;
+  }
+
+  .size-table tbody th {
+    font-weight: 500;
+  }
+
+  .size-note {
+    margin-top: var(--space-3);
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+  }
+
   @media (min-width: 900px) {
     .product {
       grid-template-columns: 1.15fr 1fr;
       gap: var(--space-8);
+    }
+
+    .product-facts {
+      grid-template-columns: 1fr 1.2fr;
     }
   }
 </style>

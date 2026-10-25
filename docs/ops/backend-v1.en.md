@@ -56,11 +56,23 @@ Every product has three prices typed by hand in Studio — lira (TRY), dollar (U
 
 ## Studio (`/studio/`)
 
-| Role | Access |
+Permissions are defined once in `public/api/lib/Perm.php` and sent to Studio with the signed-in user, which hides what a role cannot do. The API checks every request again.
+
+| Role (`users.role`) | Access |
 |---|---|
-| Owner | Everything, including sales mode, delivery price, CSV export, staff and roles. |
-| Editor | Products, photos, texts, seasons and homepage, publishing. |
-| Fulfilment | Orders, stock, customers (CRM), enquiries. |
+| Owner (`owner`) | Everything, including staff and roles. |
+| Store manager (`manager`) | Everything except staff and roles: products and prices, sourcing, stock, orders and payments, CRM, CSV export, sales report, sales mode and delivery price, content, publishing. |
+| Editor (`editor`) | Products, prices, sizes, sourcing, photos, videos, texts, stock, seasons and homepage, publishing. |
+| Content creator (`content`) | Product texts, specifications, photos, videos, close-ups and size guides; can add draft products. No prices, status, sizes or sourcing. |
+| Accountant (`accountant`) | Orders (read) and payment status, order notes, customers, CSV export, sales report, sourcing costs (read), stock (read). |
+| Fulfilment (`fulfilment`) | Orders and delivery, payment status, stock, customers, enquiries. |
+| Customer support (`support`) | Customers and their notes, enquiries, order notes (read-only orders). |
+
+### Product content
+
+Each product has a photo gallery (the first photo is the cover), an optional video with a cover image (MP4/WebM uploaded to `uploads/videos/`, limited by the PHP upload size), a size guide (column titles and note per language, rows shared), close-ups with captions per language, and per-language details and specifications. Variants carry the parcel weight. Supplier, link, item number, cost (CNY) and sourcing notes are visible to staff with sourcing access only and never leave the Studio API.
+
+`migrate.php` fills empty media and text fields of existing products from `lib/seed/catalog.json`; it never overwrites content edited in Studio.
 
 The CRM treats a customer as an email seen anywhere: an account, an order or an enquiry. Staff can add internal notes per customer.
 
@@ -68,7 +80,7 @@ The CRM treats a customer as an email seen anywhere: an account, an order or an 
 
 ### Adding staff
 
-From Studio → Settings (owner), or over SSH:
+From Studio → Settings → User roles & permissions (owner), choosing any role above, or over SSH:
 
 ```bash
 /opt/cpanel/ea-php82/root/usr/bin/php ~/public_html/api/lib/bin/invite-staff.php someone@example.com owner ru

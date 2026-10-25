@@ -41,4 +41,47 @@ final class Uploads
         Audit::log($actorId, 'upload.image', 'file', $name);
         return ['url' => '/uploads/products/' . gmdate('Y/m') . "/$name", 'width' => imagesx($image), 'height' => imagesy($image)];
     }
+
+    /** Product videos are stored as uploaded; only MP4 and WebM files that the server recognises by content are kept. */
+    public static function video(int $actorId): array
+    {
+        $limit = self::videoLimit();
+        $file = $_FILES['file'] ?? null;
+        $message = sprintf('Upload an MP4 or WebM video up to %d MB.', intdiv($limit, 1024 * 1024));
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK || $file['size'] > $limit) {
+            throw new ApiError(422, 'upload_failed', $message);
+        }
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+        $ext = ['video/mp4' => 'mp4', 'video/webm' => 'webm'][$mime] ?? null;
+        if (!$ext) {
+            throw new ApiError(422, 'upload_failed', $message);
+        }
+        $dir = dirname(__DIR__, 2) . '/uploads/videos/' . gmdate('Y/m');
+        if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+            throw new \RuntimeException('Cannot create upload directory.');
+        }
+        $name = bin2hex(random_bytes(8)) . ".$ext";
+        if (!move_uploaded_file($file['tmp_name'], "$dir/$name")) {
+            throw new \RuntimeException('Cannot store the upload.');
+        }
+        chmod("$dir/$name", 0644);
+        Audit::log($actorId, 'upload.video', 'file', $name);
+        return ['url' => '/uploads/videos/' . gmdate('Y/m') . "/$name"];
+    }
+
+    /** 100 MB, or less if the PHP upload limits on the server are lower. */
+    public static function videoLimit(): int
+    {
+        $bytes = static function (string $v): int {
+            $n = (int) $v;
+            return match (strtolower(substr(trim($v), -1))) {
+                'g' => $n * 1024 ** 3,
+                'm' => $n * 1024 ** 2,
+                'k' => $n * 1024,
+                default => $n,
+            };
+        };
+        $limits = array_filter([100 * 1024 * 1024, $bytes((string) ini_get('upload_max_filesize')), $bytes((string) ini_get('post_max_size'))]);
+        return min($limits);
+    }
 }

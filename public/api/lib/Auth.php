@@ -126,6 +126,7 @@ final class Auth
             'phone' => $u['phone'],
             'locale' => $u['locale'],
             'role' => $u['role'],
+            'permissions' => Perm::of($u),
             'emailVerified' => $u['email_verified_at'] !== null,
             'marketing' => (bool) $u['marketing_opt_in'],
             'createdAt' => iso($u['created_at']),

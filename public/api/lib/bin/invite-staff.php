@@ -15,7 +15,7 @@ require dirname(__DIR__) . '/bootstrap.php';
 
 [, $email, $role, $lang] = $argv + [null, null, 'owner', 'en'];
 if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL) || !in_array($role, STAFF_ROLES, true)) {
-    fwrite(STDERR, "Usage: invite-staff.php <email> <owner|editor|fulfilment> [en|tr|ru]\n");
+    fwrite(STDERR, 'Usage: invite-staff.php <email> <' . implode('|', STAFF_ROLES) . "> [en|tr|ru]\n");
     exit(1);
 }
 

@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace Pipolune;
 
 /**
- * Studio (admin) API. Roles: owner – everything; editor – products, content, uploads;
- * fulfilment – orders, inventory, customers.
+ * Studio (admin) API. Access is checked per action with Perm (see Perm::MAP for which role may do what).
  *
  * @var Router $router
  */
@@ -20,6 +19,13 @@ $router->get('/studio/overview', static function () {
             'of' => $activeProducts,
         ];
     }
+    $seesOrders = Perm::can($user, 'orders.view');
+    $revenue = [];
+    if (Perm::can($user, 'reports')) {
+        foreach (Db::all("SELECT currency, SUM(total) AS total, COUNT(*) AS orders FROM orders WHERE status IN ('confirmed', 'completed') GROUP BY currency") as $r) {
+            $revenue[$r['currency']] = ['total' => (int) $r['total'], 'orders' => (int) $r['orders']];
+        }
+    }
     return [
         'me' => Auth::publicUser($user),
         'counts' => [
@@ -31,7 +37,8 @@ $router->get('/studio/overview', static function () {
             'newLeads' => (int) Db::value("SELECT COUNT(*) FROM leads WHERE status = 'new'"),
             'customers' => (int) Db::value("SELECT COUNT(DISTINCT email) FROM (SELECT email FROM users WHERE role = 'customer' UNION SELECT email FROM orders UNION SELECT email FROM leads) e"),
         ],
-        'recentOrders' => array_map(Orders::summary(...), Db::all('SELECT * FROM orders ORDER BY id DESC LIMIT 5')),
+        'recentOrders' => $seesOrders ? array_map(Orders::summary(...), Db::all('SELECT * FROM orders ORDER BY id DESC LIMIT 5')) : [],
+        'revenue' => $revenue,
         'lowStock' => Db::all(
             "SELECT v.id, v.sku, v.colour, v.size, v.stock FROM product_variants v JOIN products p ON p.id = v.product_id
              WHERE v.active = 1 AND p.status = 'active' ORDER BY v.stock, v.sku LIMIT 6",
@@ -42,40 +49,50 @@ $router->get('/studio/overview', static function () {
     ];
 });
 
-// ---- Products & content (editor) ----
+// ---- Products & content ----
 
 $router->get('/studio/products', static function () {
-    Auth::requireStaff(['editor', 'fulfilment']);
-    return ['products' => Catalog::list(null, true)];
+    $user = Perm::require('products.view');
+    return ['products' => Catalog::list(null, true, Perm::can($user, 'sourcing.view'))];
 });
 
 $router->get('/studio/products/{id}', static function (array $p) {
-    Auth::requireStaff(['editor', 'fulfilment']);
-    return Catalog::byId((int) $p['id']) ?? throw ApiError::notFound('product_not_found');
+    $user = Perm::require('products.view');
+    return Catalog::byId((int) $p['id'], true, Perm::can($user, 'sourcing.view')) ?? throw ApiError::notFound('product_not_found');
 });
 
 $router->post('/studio/products', static function () {
-    $user = Auth::requireStaff(['editor']);
-    return Catalog::save(null, Http::body(), (int) $user['id']);
+    $user = Perm::require('products.content');
+    return Catalog::save(null, Http::body(), $user);
 });
 
 $router->patch('/studio/products/{id}', static function (array $p) {
-    $user = Auth::requireStaff(['editor']);
+    $user = Perm::require('products.content');
     if (!Db::value('SELECT id FROM products WHERE id = ?', [(int) $p['id']])) {
         throw ApiError::notFound('product_not_found');
     }
-    return Catalog::save((int) $p['id'], Http::body(), (int) $user['id']);
+    return Catalog::save((int) $p['id'], Http::body(), $user);
 });
 
 $router->post('/studio/uploads', static function () {
-    $user = Auth::requireStaff(['editor']);
+    $user = Perm::require('uploads');
     return Uploads::image((int) $user['id']);
 });
 
-// ---- Inventory & orders (fulfilment) ----
+$router->get('/studio/uploads/limits', static function () {
+    Perm::require('uploads');
+    return ['videoMb' => intdiv(Uploads::videoLimit(), 1024 * 1024)];
+});
+
+$router->post('/studio/uploads/video', static function () {
+    $user = Perm::require('uploads');
+    return Uploads::video((int) $user['id']);
+});
+
+// ---- Inventory & orders ----
 
 $router->get('/studio/inventory', static function () {
-    Auth::requireStaff(['fulfilment', 'editor']);
+    Perm::require('inventory.view');
     return ['variants' => Db::all(
         "SELECT v.id, v.sku, v.colour, v.size, v.stock, v.active, p.id AS productId, p.status AS productStatus,
                 COALESCE(t.name, p.slug) AS product
@@ -86,7 +103,7 @@ $router->get('/studio/inventory', static function () {
 });
 
 $router->patch('/studio/variants/{id}', static function (array $p) {
-    $user = Auth::requireStaff(['fulfilment', 'editor']);
+    $user = Perm::require('inventory.edit');
     $in = Input::body();
     $stock = $in->int('stock', 0, 100000, true);
     $in->check();
@@ -99,40 +116,53 @@ $router->patch('/studio/variants/{id}', static function (array $p) {
 });
 
 $router->get('/studio/orders', static function () {
-    Auth::requireStaff(['fulfilment']);
+    Perm::require('orders.view');
     return Orders::adminList(['status' => Http::query('status'), 'q' => Http::query('q')], max(1, (int) Http::query('page', '1')));
 });
 
 $router->get('/studio/orders/{number}', static function (array $p) {
-    Auth::requireStaff(['fulfilment']);
+    Perm::require('orders.view');
     $order = Db::one('SELECT * FROM orders WHERE number = ?', [$p['number']]) ?? throw ApiError::notFound('order_not_found');
     return Orders::present($order, true);
 });
 
 $router->patch('/studio/orders/{number}', static function (array $p) {
-    $user = Auth::requireStaff(['fulfilment']);
-    return Orders::adminUpdate($p['number'], Http::body(), $user);
+    $user = Perm::require('orders.view');
+    // Each part of the update needs its own permission; anything else in the body is dropped.
+    $allowed = [
+        'status' => 'orders.status', 'fulfilmentStatus' => 'orders.status', 'carrier' => 'orders.status',
+        'trackingNumber' => 'orders.status', 'notifyCustomer' => ['orders.status', 'orders.payment'],
+        'paymentStatus' => 'orders.payment', 'note' => 'orders.note',
+    ];
+    $body = Http::body();
+    foreach (array_keys($body) as $key) {
+        $needs = (array) ($allowed[$key] ?? []);
+        if (!array_filter($needs, static fn ($perm) => Perm::can($user, $perm))) {
+            unset($body[$key]);
+        }
+    }
+    return Orders::adminUpdate($p['number'], $body, $user);
 });
 
-// ---- CRM (fulfilment) ----
+// ---- CRM ----
 
 $router->get('/studio/customers', static function () {
-    Auth::requireStaff(['fulfilment']);
+    Perm::require('customers.view');
     return Customers::list(Http::query('q'), Http::query('segment'), max(1, (int) Http::query('page', '1')));
 });
 
 $router->get('/studio/customers/export', static function () {
-    Auth::requireStaff([]);
+    Perm::require('customers.export');
     Customers::csv();
 });
 
 $router->get('/studio/customers/{email}', static function (array $p) {
-    Auth::requireStaff(['fulfilment']);
+    Perm::require('customers.view');
     return Customers::detail(mb_strtolower($p['email']));
 });
 
 $router->post('/studio/customers/{email}/notes', static function (array $p) {
-    $user = Auth::requireStaff(['fulfilment']);
+    $user = Perm::require('customers.note');
     $in = Input::body();
     $body = $in->str('body', 4000, true);
     $in->check();
@@ -141,12 +171,12 @@ $router->post('/studio/customers/{email}/notes', static function (array $p) {
 });
 
 $router->get('/studio/leads', static function () {
-    Auth::requireStaff(['fulfilment']);
+    Perm::require('leads');
     return Customers::leads(Http::query('status'), max(1, (int) Http::query('page', '1')));
 });
 
 $router->patch('/studio/leads/{id}', static function (array $p) {
-    $user = Auth::requireStaff(['fulfilment']);
+    $user = Perm::require('leads');
     $in = Input::body();
     $status = $in->oneOf('status', ['new', 'contacted', 'closed'], true);
     $in->check();
@@ -155,22 +185,33 @@ $router->patch('/studio/leads/{id}', static function (array $p) {
     return ['ok' => true];
 });
 
-// ---- Settings, staff, publishing (owner; content settings also editor) ----
+// ---- Settings, staff, publishing ----
 
 $router->get('/studio/settings', static function () {
-    Auth::requireStaff(['editor']);
+    $user = Auth::requireStaff();
+    if (!Perm::can($user, 'settings.content') && !Perm::can($user, 'settings.sales')) {
+        throw new ApiError(403, 'forbidden', 'You do not have access to this section.');
+    }
     return [
         'settings' => Settings::all(),
         'season' => Settings::season(),
         'paymentProvider' => config('payment.provider'),
         'publishConfigured' => (bool) config('github.token'),
+        'videoLimitMb' => intdiv(Uploads::videoLimit(), 1024 * 1024),
     ];
 });
 
 $router->patch('/studio/settings', static function () {
-    $user = Auth::requireStaff(['editor']);
+    $user = Auth::requireStaff();
     $in = Input::body();
     $values = [];
+    $sent = array_keys(Http::body());
+    if (array_intersect(['season_mode', 'manual_season', 'homepage_mode', 'catalog_preview'], $sent) && !Perm::can($user, 'settings.content')) {
+        throw new ApiError(403, 'forbidden', 'You cannot change content settings.');
+    }
+    if (array_intersect(['sales_mode', 'shipping_standard'], $sent) && !Perm::can($user, 'settings.sales')) {
+        throw new ApiError(403, 'forbidden', 'Only an owner or store manager can change sales settings.');
+    }
     if ($in->has('season_mode')) {
         $values['season_mode'] = $in->oneOf('season_mode', ['auto', 'manual'], true);
     }
@@ -182,10 +223,6 @@ $router->patch('/studio/settings', static function () {
     }
     if ($in->has('catalog_preview')) {
         $values['catalog_preview'] = $in->bool('catalog_preview');
-    }
-    $ownerOnly = ['sales_mode', 'shipping_standard'];
-    if (array_intersect($ownerOnly, array_keys(Http::body())) && $user['role'] !== 'owner') {
-        throw new ApiError(403, 'forbidden', 'Only an owner can change sales settings.');
     }
     if ($in->has('sales_mode')) {
         $values['sales_mode'] = $in->oneOf('sales_mode', ['off', 'request', 'live'], true);
@@ -211,12 +248,12 @@ $router->patch('/studio/settings', static function () {
 });
 
 $router->get('/studio/staff', static function () {
-    Auth::requireStaff([]);
+    Perm::require('staff');
     return ['staff' => Staff::list()];
 });
 
 $router->post('/studio/staff', static function () {
-    $user = Auth::requireStaff([]);
+    $user = Perm::require('staff');
     $in = Input::body();
     $email = $in->email();
     $role = $in->oneOf('role', STAFF_ROLES, true);
@@ -227,7 +264,7 @@ $router->post('/studio/staff', static function () {
 });
 
 $router->patch('/studio/staff/{id}', static function (array $p) {
-    $user = Auth::requireStaff([]);
+    $user = Perm::require('staff');
     $in = Input::body();
     $role = $in->oneOf('role', [...STAFF_ROLES, 'customer'], true);
     $in->check();
@@ -237,7 +274,7 @@ $router->patch('/studio/staff/{id}', static function (array $p) {
 
 // Rebuilds the static storefront (product pages, sitemap) from the database via GitHub Actions.
 $router->post('/studio/publish', static function () {
-    $user = Auth::requireStaff(['editor']);
+    $user = Perm::require('publish');
     $token = config('github.token');
     if (!$token) {
         throw new ApiError(409, 'publish_not_configured', 'Publishing needs a GitHub token in the server configuration.');

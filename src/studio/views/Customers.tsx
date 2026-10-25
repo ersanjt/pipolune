@@ -51,7 +51,7 @@ export default function Customers({ ctx }: { ctx: Ctx }) {
         >
           <input class="s-search" type="search" placeholder={t.search} value={q} onInput={(e) => setQ(e.currentTarget.value)} aria-label={t.search} />
         </form>
-        {can.owner(ctx.me) && (
+        {can(ctx.me, 'customers.export') && (
           <a class="s-btn s-btn--ghost" href="/api/studio/customers/export" download>
             {t.exportCsv}
           </a>
@@ -209,12 +209,14 @@ export function CustomerPage({ ctx, email }: { ctx: Ctx; email: string }) {
             ))}
           </Panel>
           <Panel title={t.notes}>
-            <form class="s-stack" onSubmit={addNote}>
-              <textarea rows={3} placeholder={t.notePlaceholder} value={note} onInput={(e) => setNote(e.currentTarget.value)} aria-label={t.addNote} />
-              <button class="s-btn" type="submit" disabled={busy || !note.trim()}>
-                {t.addNote}
-              </button>
-            </form>
+            {can(ctx.me, 'customers.note') && (
+              <form class="s-stack" onSubmit={addNote}>
+                <textarea rows={3} placeholder={t.notePlaceholder} value={note} onInput={(e) => setNote(e.currentTarget.value)} aria-label={t.addNote} />
+                <button class="s-btn" type="submit" disabled={busy || !note.trim()}>
+                  {t.addNote}
+                </button>
+              </form>
+            )}
             <ol class="s-timeline">
               {data.notes.map((n) => (
                 <li>

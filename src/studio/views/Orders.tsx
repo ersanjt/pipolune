@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { api, ApiError } from '../../lib/api';
-import { amount, Badge, dateTime, ErrorNote, Loading, PageHead, Pager, Panel, shortDate, useApi, type Ctx } from '../shared';
+import { amount, Badge, can, dateTime, ErrorNote, Loading, PageHead, Pager, Panel, shortDate, useApi, type Ctx } from '../shared';
 import type { Currency } from '../../lib/currency';
 
 export interface OrderSummary {
@@ -144,12 +144,22 @@ export function OrderPage({ ctx, number }: { ctx: Ctx; number: string }) {
 
   if (!order) return message ? <ErrorNote ctx={ctx} /> : <Loading ctx={ctx} />;
 
+  const mayStatus = can(ctx.me, 'orders.status');
+  const mayPayment = can(ctx.me, 'orders.payment');
+  const mayNote = can(ctx.me, 'orders.note');
+
   async function save(e: Event) {
     e.preventDefault();
     setBusy(true);
     setMessage(null);
     try {
-      load(await api<OrderFull>(`/studio/orders/${encodeURIComponent(number)}`, { method: 'PATCH', body: form }));
+      const { status, paymentStatus, fulfilmentStatus, carrier, trackingNumber, note, notifyCustomer } = form;
+      const body = {
+        ...(mayStatus ? { status, fulfilmentStatus, carrier, trackingNumber, notifyCustomer } : {}),
+        ...(mayPayment ? { paymentStatus, notifyCustomer } : {}),
+        ...(mayNote ? { note } : {}),
+      };
+      load(await api<OrderFull>(`/studio/orders/${encodeURIComponent(number)}`, { method: 'PATCH', body }));
       setMessage({ ok: true, text: t.saved });
     } catch (err) {
       setMessage({ ok: false, text: err instanceof ApiError && err.message ? err.message : t.error });
@@ -159,7 +169,7 @@ export function OrderPage({ ctx, number }: { ctx: Ctx; number: string }) {
   }
 
   const select = (key: 'status' | 'paymentStatus' | 'fulfilmentStatus', options: Record<string, string>) => (
-    <select value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.currentTarget.value })}>
+    <select value={form[key]} disabled={key === 'paymentStatus' ? !mayPayment : !mayStatus} onChange={(e) => setForm({ ...form, [key]: e.currentTarget.value })}>
       {Object.entries(options).map(([k, v]) => (
         <option value={k}>{v}</option>
       ))}
@@ -277,24 +287,30 @@ export function OrderPage({ ctx, number }: { ctx: Ctx; number: string }) {
               </label>
               <label>
                 {t.carrier}
-                <input value={form.carrier} onInput={(e) => setForm({ ...form, carrier: e.currentTarget.value })} />
+                <input value={form.carrier} disabled={!mayStatus} onInput={(e) => setForm({ ...form, carrier: e.currentTarget.value })} />
               </label>
               <label>
                 {t.tracking}
-                <input value={form.trackingNumber} onInput={(e) => setForm({ ...form, trackingNumber: e.currentTarget.value })} />
+                <input value={form.trackingNumber} disabled={!mayStatus} onInput={(e) => setForm({ ...form, trackingNumber: e.currentTarget.value })} />
               </label>
               <label>
                 {t.internalNote}
-                <textarea rows={3} value={form.note} onInput={(e) => setForm({ ...form, note: e.currentTarget.value })} />
+                <textarea rows={3} value={form.note} disabled={!mayNote} onInput={(e) => setForm({ ...form, note: e.currentTarget.value })} />
               </label>
-              <label class="s-check">
-                <input type="checkbox" checked={form.notifyCustomer} onChange={(e) => setForm({ ...form, notifyCustomer: e.currentTarget.checked })} />
-                {t.notifyCustomer}
-              </label>
+              {(mayStatus || mayPayment) && (
+                <label class="s-check">
+                  <input type="checkbox" checked={form.notifyCustomer} onChange={(e) => setForm({ ...form, notifyCustomer: e.currentTarget.checked })} />
+                  {t.notifyCustomer}
+                </label>
+              )}
               {message && <p class={message.ok ? 's-success' : 's-error'}>{message.text}</p>}
-              <button class="s-btn" type="submit" disabled={busy}>
-                {t.save}
-              </button>
+              {mayStatus || mayPayment || mayNote ? (
+                <button class="s-btn" type="submit" disabled={busy}>
+                  {t.save}
+                </button>
+              ) : (
+                <p class="s-muted">{t.viewOnly}</p>
+              )}
             </form>
           </Panel>
         </div>

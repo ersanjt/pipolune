@@ -7,7 +7,9 @@ export interface User {
   name: string;
   phone: string | null;
   locale: 'en' | 'tr' | 'ru';
-  role: 'customer' | 'owner' | 'editor' | 'fulfilment';
+  role: 'customer' | 'owner' | 'manager' | 'editor' | 'content' | 'accountant' | 'fulfilment' | 'support';
+  /** Studio permissions from the server (Perm::MAP); empty for customers. */
+  permissions?: string[];
   emailVerified: boolean;
   marketing: boolean;
 }

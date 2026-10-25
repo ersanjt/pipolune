@@ -13,8 +13,12 @@ final class MailCopy
 
     public const ROLES = [
         'owner' => ['en' => 'owner', 'tr' => 'sahip', 'ru' => 'владелец'],
+        'manager' => ['en' => 'store manager', 'tr' => 'mağaza müdürü', 'ru' => 'управляющий магазином'],
         'editor' => ['en' => 'editor', 'tr' => 'editör', 'ru' => 'редактор'],
+        'content' => ['en' => 'content creator', 'tr' => 'içerik üreticisi', 'ru' => 'контент-менеджер'],
+        'accountant' => ['en' => 'accountant', 'tr' => 'muhasebeci', 'ru' => 'бухгалтер'],
         'fulfilment' => ['en' => 'fulfilment', 'tr' => 'sevkiyat', 'ru' => 'отправка'],
+        'support' => ['en' => 'customer support', 'tr' => 'müşteri destek', 'ru' => 'поддержка клиентов'],
     ];
 
     public const TRACKING = [

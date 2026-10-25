@@ -10,28 +10,118 @@
       "age_band": "3-24m",
       "prices": { "TRY": 189000, "USD": 4900, "RUB": 449000 },
       "image": "/images/products/acorn-hooded-jumpsuit.webp",
+      "gallery": [
+        "/images/products/acorn-hooded-jumpsuit.webp",
+        "/images/products/acorn-hooded-jumpsuit/01.webp",
+        "/images/products/acorn-hooded-jumpsuit/02.webp",
+        "/images/products/acorn-hooded-jumpsuit/03.webp",
+        "/images/products/acorn-hooded-jumpsuit/04.webp",
+        "/images/products/acorn-hooded-jumpsuit/06.webp",
+        "/images/products/acorn-hooded-jumpsuit/08.webp"
+      ],
+      "video": {
+        "url": "/videos/products/acorn-hooded-jumpsuit.mp4",
+        "poster": "/images/products/acorn-hooded-jumpsuit/video-poster.webp"
+      },
+      "size_chart": {
+        "head": {
+          "en": ["Size", "Height (cm)", "Weight (kg)", "Age (months)", "Length (cm)", "Half chest (cm)", "Sleeve (cm)"],
+          "tr": ["Beden", "Boy (cm)", "Kilo (kg)", "Yaş (ay)", "Ürün boyu (cm)", "Yarım göğüs (cm)", "Kol (cm)"],
+          "ru": ["Размер", "Рост (см)", "Вес (кг)", "Возраст (мес.)", "Длина (см)", "Полуобхват груди (см)", "Рукав (см)"]
+        },
+        "rows": [
+          ["66", "57–64", "4.5–6.5", "1–3", "56", "35", "32"],
+          ["73", "64–73", "7–9", "4–6", "59.5", "36.5", "34.5"],
+          ["80", "68–78", "9.5–12", "7–11", "63", "38", "37"],
+          ["90", "78–88", "11–14", "11–15", "66.5", "39.5", "39.5"]
+        ],
+        "note": {
+          "en": "Measured flat, allow 1–3 cm. Between sizes? Choose the larger one — the sleeves can be rolled up.",
+          "tr": "Düz zeminde ölçülmüştür, 1–3 cm fark olabilir. İki beden arasındaysa büyük olanı seçin — kollar katlanabilir.",
+          "ru": "Замеры по изделию в разложенном виде, возможна разница 1–3 см. Если ребёнок между размерами, берите больший — рукава можно подвернуть."
+        }
+      },
+      "features": [
+        { "image": "/images/products/acorn-hooded-jumpsuit/detail-collar.webp", "caption": { "en": "A low collar that doesn't press on the chin", "tr": "Çeneye baskı yapmayan yaka", "ru": "Воротник не давит на подбородок" } },
+        { "image": "/images/products/acorn-hooded-jumpsuit/detail-cuff.webp", "caption": { "en": "Pile cuffs keep the wind out", "tr": "Rüzgârı içeri almayan tüylü manşetler", "ru": "Меховые манжеты защищают от ветра" } },
+        { "image": "/images/products/acorn-hooded-jumpsuit/detail-front.webp", "caption": { "en": "Opens fully at the front for easy dressing", "tr": "Kolay giydirmek için önden tamamen açılır", "ru": "Полностью расстёгивается спереди — легко надеть" } },
+        { "image": "/images/products/acorn-hooded-jumpsuit/detail-trim.webp", "caption": { "en": "Soft pile trim and two patch pockets", "tr": "Yumuşak tüylü şeritler ve iki cep", "ru": "Мягкая меховая отделка и два кармана" } },
+        { "image": "/images/products/acorn-hooded-jumpsuit/detail-legs.webp", "caption": { "en": "Snaps along the legs for quick nappy changes", "tr": "Hızlı bez değişimi için bacaklarda çıtçıtlar", "ru": "Кнопки на штанинах — быстро сменить подгузник" } }
+      ],
+      "sourcing": {
+        "supplier_name": "Huzhou Daqi Clothing Co., Ltd (湖州达淇服饰有限公司)",
+        "supplier_url": "https://detail.1688.com/offer/837546995437.html",
+        "supplier_sku": "25026",
+        "cost_cny": 5900,
+        "note": "Supplier brand: Midanqiwa. 1688 colour: dark brown. Parcel weight 360 g in every size. Supplier stock on 25 Oct 2026: 66 cm 6 pcs, 73 cm 42 pcs. Supplier offers 7-day returns. Supplier lists it for boys; sold here as unisex."
+      },
       "translations": {
         "en": {
           "name": "Acorn Hooded Jumpsuit",
           "subtitle": "Warm faux-suede jumpsuit with a hood",
-          "description": "A thick, warm one-piece for autumn and winter outings. Soft brown faux-suede outer with cream pile trim and lining, a cosy hood, front buttons, two patch pockets and snaps along the legs for easy changes. Outer: 100% synthetic. Sizes by height: 66 cm (57–64 cm, 4.5–6.5 kg), 73 cm (64–73 cm, 7–9 kg), 80 cm (68–78 cm, 9.5–12 kg), 90 cm (78–88 cm, 11–14 kg). If in doubt, choose the larger size."
+          "description": "A thick, warm one-piece for autumn and winter outings. Soft brown faux-suede outer with cream pile trim and lining, a cosy hood, front buttons, two patch pockets and snaps along the legs for easy changes. Outer: 100% synthetic. Sizes by height: 66 cm (57–64 cm, 4.5–6.5 kg), 73 cm (64–73 cm, 7–9 kg), 80 cm (68–78 cm, 9.5–12 kg), 90 cm (78–88 cm, 11–14 kg). If in doubt, choose the larger size.",
+          "details": "Made for chilly walks: the thick faux-suede outer keeps the wind out and the soft pile lining keeps your little one warm.\n\nThe front opens all the way, so dressing is quick, and the snaps along the legs make nappy changes easy without taking the whole suit off.\n\nThe collar sits low so it doesn't press on the chin, and the pile cuffs keep the wind out of the sleeves.",
+          "specs": [
+            { "label": "Outer", "value": "Faux suede (synthetic leather), 100% synthetic" },
+            { "label": "Lining", "value": "Soft faux-shearling pile" },
+            { "label": "Warmth", "value": "Thick, pile-lined — for autumn and winter" },
+            { "label": "Fastening", "value": "Buttons down the front, snaps along the legs" },
+            { "label": "Hood", "value": "Yes, with pile trim" },
+            { "label": "Sleeves", "value": "Long, with pile cuffs" },
+            { "label": "Pockets", "value": "Two patch pockets" },
+            { "label": "Colour", "value": "Dark brown" },
+            { "label": "Sizes", "value": "66, 73, 80, 90 cm (about 1–15 months)" },
+            { "label": "Safety", "value": "Class A fabric (for babies and infants)" },
+            { "label": "Parcel weight", "value": "360 g" },
+            { "label": "Made in", "value": "China" }
+          ]
         },
         "tr": {
           "name": "Acorn Hooded Jumpsuit",
           "subtitle": "Kapüşonlu, süet görünümlü sıcak tulum",
-          "description": "Sonbahar ve kış gezmeleri için kalın, sıcak tek parça tulum. Yumuşak kahverengi süet görünümlü dış yüzey, krem tüylü kenarlar ve astar, sıcacık kapüşon, önden düğmeli kapanış, iki cep ve kolay alt değiştirme için bacak boyunca çıtçıtlar. Dış kumaş: %100 sentetik. Boya göre bedenler: 66 cm (57–64 cm, 4,5–6,5 kg), 73 cm (64–73 cm, 7–9 kg), 80 cm (68–78 cm, 9,5–12 kg), 90 cm (78–88 cm, 11–14 kg). Kararsız kalırsanız bir büyük bedeni seçin."
+          "description": "Sonbahar ve kış gezmeleri için kalın, sıcak tek parça tulum. Yumuşak kahverengi süet görünümlü dış yüzey, krem tüylü kenarlar ve astar, sıcacık kapüşon, önden düğmeli kapanış, iki cep ve kolay alt değiştirme için bacak boyunca çıtçıtlar. Dış kumaş: %100 sentetik. Boya göre bedenler: 66 cm (57–64 cm, 4,5–6,5 kg), 73 cm (64–73 cm, 7–9 kg), 80 cm (68–78 cm, 9,5–12 kg), 90 cm (78–88 cm, 11–14 kg). Kararsız kalırsanız bir büyük bedeni seçin.",
+          "details": "Serin havadaki yürüyüşler için: kalın süet görünümlü dış yüzey rüzgârı keser, yumuşak tüylü astar bebeğinizi sıcak tutar.\n\nÖnden tamamen açıldığı için giydirmek kolaydır; bacaklardaki çıtçıtlar sayesinde tulumu çıkarmadan bez değiştirebilirsiniz.\n\nYaka alçak kesimlidir, çeneye baskı yapmaz; tüylü manşetler kollardan rüzgâr girmesini önler.",
+          "specs": [
+            { "label": "Dış kumaş", "value": "Süet görünümlü suni deri, %100 sentetik" },
+            { "label": "Astar", "value": "Yumuşak suni kuzu tüyü" },
+            { "label": "Sıcaklık", "value": "Kalın, tüylü astarlı — sonbahar ve kış için" },
+            { "label": "Kapanış", "value": "Önden düğmeli, bacaklarda çıtçıt" },
+            { "label": "Kapüşon", "value": "Var, tüylü kenarlı" },
+            { "label": "Kollar", "value": "Uzun, tüylü manşetli" },
+            { "label": "Cepler", "value": "İki adet önden cep" },
+            { "label": "Renk", "value": "Koyu kahverengi" },
+            { "label": "Bedenler", "value": "66, 73, 80, 90 cm (yaklaşık 1–15 ay)" },
+            { "label": "Güvenlik", "value": "A sınıfı kumaş (bebek ve küçük çocuklar için)" },
+            { "label": "Paket ağırlığı", "value": "360 g" },
+            { "label": "Üretim yeri", "value": "Çin" }
+          ]
         },
         "ru": {
           "name": "Acorn Hooded Jumpsuit",
           "subtitle": "Тёплый комбинезон под замшу с капюшоном",
-          "description": "Плотный тёплый комбинезон для прогулок осенью и зимой. Мягкий коричневый верх под замшу, кремовая отделка и подкладка из искусственного меха, уютный капюшон, пуговицы спереди, два накладных кармана и кнопки по штанинам для удобного переодевания. Верх: 100% синтетика. Размеры по росту: 66 см (57–64 см, 4,5–6,5 кг), 73 см (64–73 см, 7–9 кг), 80 см (68–78 см, 9,5–12 кг), 90 см (78–88 см, 11–14 кг). Если сомневаетесь, берите размер больше."
+          "description": "Плотный тёплый комбинезон для прогулок осенью и зимой. Мягкий коричневый верх под замшу, кремовая отделка и подкладка из искусственного меха, уютный капюшон, пуговицы спереди, два накладных кармана и кнопки по штанинам для удобного переодевания. Верх: 100% синтетика. Размеры по росту: 66 см (57–64 см, 4,5–6,5 кг), 73 см (64–73 см, 7–9 кг), 80 см (68–78 см, 9,5–12 кг), 90 см (78–88 см, 11–14 кг). Если сомневаетесь, берите размер больше.",
+          "details": "Для прогулок в холодную погоду: плотный верх под замшу защищает от ветра, а мягкая меховая подкладка сохраняет тепло.\n\nКомбинезон полностью расстёгивается спереди, поэтому его легко надеть, а кнопки по штанинам позволяют сменить подгузник, не снимая его целиком.\n\nНизкий воротник не давит на подбородок, а меховые манжеты не пускают ветер в рукава.",
+          "specs": [
+            { "label": "Верх", "value": "Искусственная замша (эко-кожа), 100% синтетика" },
+            { "label": "Подкладка", "value": "Мягкий искусственный мех" },
+            { "label": "Утепление", "value": "Плотный, на меху — для осени и зимы" },
+            { "label": "Застёжка", "value": "Пуговицы спереди, кнопки по штанинам" },
+            { "label": "Капюшон", "value": "Есть, с меховой отделкой" },
+            { "label": "Рукава", "value": "Длинные, с меховыми манжетами" },
+            { "label": "Карманы", "value": "Два накладных кармана" },
+            { "label": "Цвет", "value": "Тёмно-коричневый" },
+            { "label": "Размеры", "value": "66, 73, 80, 90 см (примерно 1–15 месяцев)" },
+            { "label": "Безопасность", "value": "Ткань класса А (для малышей)" },
+            { "label": "Вес посылки", "value": "360 г" },
+            { "label": "Страна производства", "value": "Китай" }
+          ]
         }
       },
       "variants": [
-        { "sku": "PL-ACJ-BRN-66", "colour": "Brown", "size": "66 cm", "stock": 0 },
-        { "sku": "PL-ACJ-BRN-73", "colour": "Brown", "size": "73 cm", "stock": 0 },
-        { "sku": "PL-ACJ-BRN-80", "colour": "Brown", "size": "80 cm", "stock": 0 },
-        { "sku": "PL-ACJ-BRN-90", "colour": "Brown", "size": "90 cm", "stock": 0 }
+        { "sku": "PL-ACJ-BRN-66", "colour": "Brown", "size": "66 cm", "stock": 0, "weight_g": 360 },
+        { "sku": "PL-ACJ-BRN-73", "colour": "Brown", "size": "73 cm", "stock": 0, "weight_g": 360 },
+        { "sku": "PL-ACJ-BRN-80", "colour": "Brown", "size": "80 cm", "stock": 0, "weight_g": 360 },
+        { "sku": "PL-ACJ-BRN-90", "colour": "Brown", "size": "90 cm", "stock": 0, "weight_g": 360 }
       ]
     },
     {

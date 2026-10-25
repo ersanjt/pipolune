@@ -1,13 +1,13 @@
 import { useState } from 'preact/hooks';
 import { api, ApiError } from '../../lib/api';
-import { can, dateTime, ErrorNote, Loading, PageHead, Panel, useApi, type Ctx } from '../shared';
+import { can, dateTime, ErrorNote, Loading, PageHead, Panel, STAFF_ROLES, useApi, type Ctx } from '../shared';
 import { useSettings } from './Content';
 import { currencies, currencySymbol, type Currency } from '../../lib/currency';
 
 export function PublishButton({ ctx }: { ctx: Ctx }) {
   const { t } = ctx;
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'missing' | 'error'>('idle');
-  if (!can.products(ctx.me)) return null;
+  if (!can(ctx.me, 'publish')) return null;
   const note = { done: t.published, missing: t.publishMissing, error: t.error }[state as 'done' | 'missing' | 'error'];
   return (
     <span class="s-publish">
@@ -43,7 +43,7 @@ interface StaffMember {
 
 export default function Settings({ ctx }: { ctx: Ctx }) {
   const { t } = ctx;
-  const owner = can.owner(ctx.me);
+  const owner = can(ctx.me, 'settings.sales');
   const { data, error, patch, message } = useSettings(ctx);
   const [shipping, setShipping] = useState<Partial<Record<Currency, string>>>({});
   if (error) return <ErrorNote ctx={ctx} />;
@@ -100,7 +100,7 @@ export default function Settings({ ctx }: { ctx: Ctx }) {
         </Panel>
       </div>
 
-      {owner && <StaffPanel ctx={ctx} />}
+      {can(ctx.me, 'staff') && <StaffPanel ctx={ctx} />}
     </>
   );
 }
@@ -179,7 +179,7 @@ function StaffPanel({ ctx }: { ctx: Ctx }) {
       >
         <input type="email" required placeholder={t.email} value={email} onInput={(e) => setEmail(e.currentTarget.value)} aria-label={t.email} />
         <select value={role} onChange={(e) => setRole(e.currentTarget.value)} aria-label={t.role}>
-          {['owner', 'editor', 'fulfilment'].map((r) => (
+          {STAFF_ROLES.map((r) => (
             <option value={r}>{t.roles[r]}</option>
           ))}
         </select>
@@ -194,6 +194,15 @@ function StaffPanel({ ctx }: { ctx: Ctx }) {
       </form>
       <p class="s-muted">{t.inviteHelp}</p>
       {message && <p class={message.ok ? 's-success' : 's-error'}>{message.text}</p>}
+      <h3 class="s-subhead">{t.rolesTitle}</h3>
+      <dl class="s-roles">
+        {STAFF_ROLES.map((r) => (
+          <div>
+            <dt>{t.roles[r]}</dt>
+            <dd>{t.roleHelp[r]}</dd>
+          </div>
+        ))}
+      </dl>
     </Panel>
   );
 }

@@ -111,8 +111,31 @@ export function Pager({ ctx, page, total, size, onPage }: { ctx: Ctx; page: numb
   );
 }
 
-export const can = {
-  products: (me: User) => ['owner', 'editor'].includes(me.role),
-  orders: (me: User) => ['owner', 'fulfilment'].includes(me.role),
-  owner: (me: User) => me.role === 'owner',
-};
+export type Permission =
+  | 'products.view'
+  | 'products.content'
+  | 'products.manage'
+  | 'sourcing.view'
+  | 'uploads'
+  | 'publish'
+  | 'inventory.view'
+  | 'inventory.edit'
+  | 'orders.view'
+  | 'orders.status'
+  | 'orders.payment'
+  | 'orders.note'
+  | 'customers.view'
+  | 'customers.note'
+  | 'customers.export'
+  | 'leads'
+  | 'reports'
+  | 'settings.content'
+  | 'settings.sales'
+  | 'staff';
+
+/** Mirrors Perm::MAP on the server, which sends the list for the signed-in user. */
+export function can(me: User, permission: Permission): boolean {
+  return me.role === 'owner' || !!me.permissions?.includes(permission);
+}
+
+export const STAFF_ROLES = ['owner', 'manager', 'editor', 'content', 'accountant', 'fulfilment', 'support'] as const;

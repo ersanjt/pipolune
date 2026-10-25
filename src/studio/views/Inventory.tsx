@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { api } from '../../lib/api';
-import { ErrorNote, Loading, PageHead, Panel, useApi, type Ctx } from '../shared';
+import { can, ErrorNote, Loading, PageHead, Panel, useApi, type Ctx } from '../shared';
 
 interface Row {
   id: number;
@@ -61,6 +61,7 @@ export default function Inventory({ ctx }: { ctx: Ctx }) {
                     class={`s-stock-input${v.stock <= 2 ? ' s-stock--low' : ''}`}
                     type="number"
                     min="0"
+                    disabled={!can(ctx.me, 'inventory.edit')}
                     value={v.stock}
                     aria-label={`${t.stock} ${v.sku}`}
                     onChange={(e) => setStock(v, Number(e.currentTarget.value))}

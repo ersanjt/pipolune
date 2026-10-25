@@ -38,11 +38,45 @@ foreach ($files as $file) {
 }
 
 // Seed products are added once, matched by slug; after that Studio owns them (archived ones stay archived).
+// Media and content fields that are still empty on an existing product are filled from the seed, never overwritten.
 $seed = json_decode(file_get_contents(dirname(__DIR__) . '/seed/catalog.json'), true, flags: JSON_THROW_ON_ERROR);
-$added = Db::tx(static function () use ($seed): array {
+$json = static fn (mixed $v): ?string => $v === null ? null : json_encode($v, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+[$added, $filled] = Db::tx(static function () use ($seed, $json): array {
     $added = [];
+    $filled = [];
     foreach ($seed['products'] as $i => $p) {
-        if (Db::value('SELECT id FROM products WHERE slug = ?', [$p['slug']])) {
+        $media = [
+            'gallery' => $json($p['gallery'] ?? null),
+            'video' => $p['video']['url'] ?? '',
+            'video_poster' => $p['video']['poster'] ?? '',
+            'size_chart' => $json($p['size_chart'] ?? null),
+            'features' => $json($p['features'] ?? null),
+            'supplier_name' => $p['sourcing']['supplier_name'] ?? '',
+            'supplier_url' => $p['sourcing']['supplier_url'] ?? '',
+            'supplier_sku' => $p['sourcing']['supplier_sku'] ?? '',
+            'cost_cny' => $p['sourcing']['cost_cny'] ?? null,
+            'sourcing_note' => $p['sourcing']['note'] ?? null,
+        ];
+        $existing = Db::one('SELECT * FROM products WHERE slug = ?', [$p['slug']]);
+        if ($existing) {
+            $id = (int) $existing['id'];
+            $fill = array_filter($media, static fn ($v, $k) => $v !== null && $v !== '' && ($existing[$k] === null || $existing[$k] === ''), ARRAY_FILTER_USE_BOTH);
+            foreach ($p['translations'] as $locale => $t) {
+                $row = Db::one('SELECT specs, details FROM product_translations WHERE product_id = ? AND locale = ?', [$id, $locale]);
+                if ($row && $row['specs'] === null && $row['details'] === null && (isset($t['specs']) || isset($t['details']))) {
+                    Db::update('product_translations', ['specs' => $json($t['specs'] ?? []), 'details' => $t['details'] ?? ''], ['product_id' => $id, 'locale' => $locale]);
+                    $fill["specs.$locale"] = true;
+                }
+            }
+            foreach ($p['variants'] as $v) {
+                if (isset($v['weight_g'])) {
+                    Db::run('UPDATE product_variants SET weight_g = ? WHERE product_id = ? AND sku = ? AND weight_g IS NULL', [$v['weight_g'], $id, $v['sku']]);
+                }
+            }
+            if ($fill) {
+                Db::update('products', array_filter($fill, static fn ($v) => $v !== true), ['id' => $id]);
+                $filled[] = $p['slug'];
+            }
             continue;
         }
         $id = Db::insert('products', [
@@ -57,19 +91,30 @@ $added = Db::tx(static function () use ($seed): array {
             'price_rub' => $p['prices']['RUB'],
             'image' => $p['image'],
             'sort_order' => $p['sort_order'] ?? $i,
-        ]);
+        ] + $media);
         foreach ($p['translations'] as $locale => $t) {
-            Db::insert('product_translations', ['product_id' => $id, 'locale' => $locale] + $t);
+            Db::insert('product_translations', [
+                'product_id' => $id,
+                'locale' => $locale,
+                'name' => $t['name'],
+                'subtitle' => $t['subtitle'] ?? '',
+                'description' => $t['description'] ?? '',
+                'details' => $t['details'] ?? null,
+                'specs' => $json($t['specs'] ?? null),
+            ]);
         }
         foreach ($p['variants'] as $v) {
             Db::insert('product_variants', ['product_id' => $id] + $v);
         }
         $added[] = $p['slug'];
     }
-    return $added;
+    return [$added, $filled];
 });
 if ($added) {
     echo 'added products: ' . implode(', ', $added) . "\n";
+}
+if ($filled) {
+    echo 'filled product content: ' . implode(', ', $filled) . "\n";
 }
 
 echo "database up to date\n";

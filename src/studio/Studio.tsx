@@ -82,13 +82,13 @@ export default function Studio() {
   const [, section = '', param] = hash.split('/');
   const nav = [
     { key: 'overview', href: '#/', show: true },
-    { key: 'products', href: '#/products', show: true },
-    { key: 'inventory', href: '#/inventory', show: true },
-    { key: 'orders', href: '#/orders', show: can.orders(me) },
-    { key: 'customers', href: '#/customers', show: can.orders(me) },
-    { key: 'leads', href: '#/leads', show: can.orders(me) },
-    { key: 'content', href: '#/content', show: can.products(me) },
-    { key: 'settings', href: '#/settings', show: can.products(me) },
+    { key: 'products', href: '#/products', show: can(me, 'products.view') },
+    { key: 'inventory', href: '#/inventory', show: can(me, 'inventory.view') },
+    { key: 'orders', href: '#/orders', show: can(me, 'orders.view') },
+    { key: 'customers', href: '#/customers', show: can(me, 'customers.view') },
+    { key: 'leads', href: '#/leads', show: can(me, 'leads') },
+    { key: 'content', href: '#/content', show: can(me, 'settings.content') },
+    { key: 'settings', href: '#/settings', show: can(me, 'settings.sales') || can(me, 'settings.content') || can(me, 'staff') },
   ].filter((n) => n.show);
   const active = section || 'overview';
 
