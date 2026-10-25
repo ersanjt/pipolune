@@ -2,14 +2,18 @@
 declare(strict_types=1);
 
 // "/" sends visitors to /en/, /tr/ or /ru/. Order: language picked in the switcher (pl_lang cookie),
-// a Turkish/Russian browser language, the Cloudflare IP country, then English (also for crawlers,
-// which send neither, so Google indexes /en/ as the main version; hreflang covers the others).
+// a Turkish/Russian browser language, the Cloudflare IP country, then English. Crawlers always get
+// English so search engines index /en/ as the main version; hreflang points them to the others.
 
 const LOCALES = ['en', 'tr', 'ru'];
 const COUNTRY_LOCALE = ['TR' => 'tr', 'RU' => 'ru', 'BY' => 'ru', 'KZ' => 'ru', 'KG' => 'ru'];
+const CRAWLERS = '/bot|crawl|spider|slurp|yandex|bingpreview|facebookexternalhit|embedly|whatsapp|telegram|lighthouse|headless/i';
 
 function pick(): string
 {
+    if (preg_match(CRAWLERS, (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''))) {
+        return 'en';
+    }
     $saved = $_COOKIE['pl_lang'] ?? '';
     if (in_array($saved, LOCALES, true)) {
         return $saved;
@@ -24,5 +28,5 @@ function pick(): string
 
 $query = $_SERVER['QUERY_STRING'] ?? '';
 header('Cache-Control: private, no-store');
-header('Vary: Cookie, Accept-Language, CF-IPCountry');
+header('Vary: Cookie, Accept-Language, CF-IPCountry, User-Agent');
 header('Location: /' . pick() . '/' . ($query !== '' ? "?$query" : ''), true, 302);
