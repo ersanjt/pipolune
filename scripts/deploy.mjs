@@ -64,7 +64,7 @@ function queueProductMail() {
 function ensureMailCron() {
   const command = [
     'mkdir -p "$HOME/logs"',
-    `( crontab -l 2>/dev/null | grep -v "api/lib/bin/mail-cron.php" || true; echo "*/5 * * * * ${PHP} \\$HOME/${REMOTE}/api/lib/bin/mail-cron.php >> \\$HOME/logs/mail-cron.log 2>&1" ) | crontab -`,
+    `( crontab -l 2>/dev/null | grep -v "api/lib/bin/mail-cron.php" || true; echo "*/5 * * * * ${PHP} $HOME/${REMOTE}/api/lib/bin/mail-cron.php >> $HOME/logs/mail-cron.log 2>&1" ) | crontab -`,
   ].join(" && ");
   const res = ssh(command);
   if (res.status !== 0) {

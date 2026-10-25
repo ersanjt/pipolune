@@ -157,20 +157,31 @@ final class Mailer
                 Cart::items((int) $row['id'], $lang),
                 static fn (array $item) => $item['available'],
             ));
-            // Keep updated_at so this write is not treated as a new edit of the bag.
-            Db::run('UPDATE carts SET reminded_at = UTC_TIMESTAMP(), updated_at = updated_at WHERE id = ?', [$row['id']]);
             if (!$items) {
+                self::markCartReminded((int) $row['id']);
                 continue;
             }
-            if (self::enqueue('cart_reminder', $lang, $row['email'], [
-                'name' => $row['name'],
-                'link' => self::origin() . "/$lang/bag/",
-                'items' => self::itemLines($items),
-            ], 'cart:' . $row['id'] . ':' . $row['updated_at'])) {
-                $queued++;
+            try {
+                if (self::enqueue('cart_reminder', $lang, $row['email'], [
+                    'name' => $row['name'],
+                    'link' => self::origin() . "/$lang/bag/",
+                    'items' => self::itemLines($items),
+                ], 'cart:' . $row['id'] . ':' . $row['updated_at'])) {
+                    $queued++;
+                }
+            } catch (\Throwable $e) {
+                error_log('[pipolune-mail] cart ' . $row['id'] . ': ' . $e->getMessage());
+                continue;
             }
+            self::markCartReminded((int) $row['id']);
         }
         return $queued;
+    }
+
+    /** Setting reminded_at must not bump updated_at, or the bag looks newly edited. */
+    private static function markCartReminded(int $cartId): void
+    {
+        Db::run('UPDATE carts SET reminded_at = UTC_TIMESTAMP(), updated_at = updated_at WHERE id = ?', [$cartId]);
     }
 
     /** @return array{sent: int, failed: int, skipped: int} */
@@ -651,7 +662,9 @@ final class Mailer
 
     private static function encodedName(string $value): string
     {
-        return mb_encode_mimeheader(str_replace(["\r", "\n"], '', $value), 'UTF-8');
+        $value = str_replace(["\r", "\n"], ' ', trim($value));
+        $encoded = mb_encode_mimeheader($value, 'UTF-8');
+        return preg_replace("/\r\n[ \t]*/", ' ', $encoded) ?? $encoded;
     }
 
     private static function h(?string $value): string
