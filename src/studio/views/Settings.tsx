@@ -37,6 +37,7 @@ interface StaffMember {
   email: string;
   name: string;
   role: string;
+  primary?: boolean;
   active: boolean;
   lastLoginAt: string | null;
 }
@@ -148,11 +149,12 @@ function StaffPanel({ ctx }: { ctx: Ctx }) {
                 <td>
                   {m.name || m.email}
                   {m.name && <div class="s-muted">{m.email}</div>}
+                  {m.primary && <div class="s-muted">✦ {t.primaryOwner}</div>}
                 </td>
                 <td>
                   <select
                     value={m.role}
-                    disabled={busy || m.id === ctx.me.id}
+                    disabled={busy || m.id === ctx.me.id || m.primary}
                     aria-label={t.role}
                     onChange={(e) => run(() => api(`/studio/staff/${m.id}`, { method: 'PATCH', body: { role: e.currentTarget.value } }), t.saved)}
                   >

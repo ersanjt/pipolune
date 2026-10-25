@@ -60,7 +60,7 @@ Permissions are defined once in `public/api/lib/Perm.php` and sent to Studio wit
 
 | Role (`users.role`) | Access |
 |---|---|
-| Owner (`owner`) | Everything, including staff and roles. |
+| Owner (`owner`) | Everything, including staff and roles. The main owner (`users.is_primary`, the shop's owner) can never be demoted or removed, even by another owner. |
 | Store manager (`manager`) | Everything except staff and roles: products and prices, sourcing, stock, orders and payments, CRM, CSV export, sales report, sales mode and delivery price, content, publishing. |
 | Editor (`editor`) | Products, prices, sizes, sourcing, photos, videos, texts, stock, seasons and homepage, publishing. |
 | Content creator (`content`) | Product texts, specifications, photos, videos, close-ups and size guides; can add draft products. No prices, status, sizes or sourcing. |
