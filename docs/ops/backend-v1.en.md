@@ -50,6 +50,10 @@ Set by an owner in Studio → Settings.
 
 Confirming an order reserves stock; cancelling a confirmed order returns it. Order, payment and delivery statuses are separate.
 
+## Currencies
+
+Every product has three prices typed by hand in Studio — lira (TRY), dollar (USD) and ruble (RUB). There is no exchange-rate conversion. The page language picks the default (English → USD, Turkish → TRY, Russian → RUB); the header switcher stores another choice in the `pl_currency` cookie, which the API also reads. The bag, checkout and order use the chosen currency, and an order keeps it (`orders.currency`). Standard delivery is set per currency in Studio → Settings; an empty value means delivery is confirmed by email.
+
 ## Studio (`/studio/`)
 
 | Role | Access |
