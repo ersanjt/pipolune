@@ -64,7 +64,7 @@ const jsonLd = [
         {
           seasons.map((s) => (
             <li class="season-card" style={`--tint: var(--tint-${s});`} data-season={s}>
-              <a href={`/${lang}/shop/?season=${s}`}>
+              <a href={`/${lang}/seasons/${s}/`}>
                 <img src={`/images/home/season-${s}.webp`} alt="" width="105" height="83" loading="lazy" />
                 <span class="season-card__label">
                   {t.seasons[s]}

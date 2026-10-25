@@ -1,0 +1,157 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import SiteHeader from '../../../components/SiteHeader.astro';
+import SiteFooter from '../../../components/SiteFooter.astro';
+import CatalogView from '../../../components/CatalogView.astro';
+import Icon from '../../../components/Icon.astro';
+import { locales, ui, type Locale, type SeasonKey } from '../../../i18n/ui';
+import { loadCatalog } from '../../../lib/catalog';
+
+export async function getStaticPaths() {
+  const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
+  return locales.flatMap((lang) => seasons.map((season) => ({ params: { lang, season } })));
+}
+
+const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
+
+const lang = Astro.params.lang as Locale;
+const season = Astro.params.season as SeasonKey;
+const t = ui[lang];
+const products = (await loadCatalog()).filter((product) => product.season === season || product.season === 'all');
+const path = `seasons/${season}/`;
+const others = seasons.filter((item) => item !== season);
+---
+
+<BaseLayout lang={lang} title={`${t.seasons[season]} — Pipolune`} description={t.seasonLead[season]} path={path}>
+  <a class="skip-link" href="#main">{t.skipLink}</a>
+  <SiteHeader lang={lang} path={path} />
+  <main id="main" class="container">
+    <section class="season-hero" style={`--tint: var(--tint-${season});`}>
+      <div>
+        <p class="season-hero__kicker">{t.seasonKicker[season]}</p>
+        <h1>{t.seasons[season]}</h1>
+        <div class="season-hero__divider" aria-hidden="true"><span>✦</span></div>
+        <p>{t.seasonLead[season]}</p>
+      </div>
+      <img src={`/images/home/season-${season}.webp`} alt="" width="210" height="166" />
+    </section>
+    <CatalogView products={products} lang={lang} lockSeason />
+    <nav class="other-seasons" aria-label={t.seasonsTitle}>
+      {
+        others.map((item) => (
+          <a href={`/${lang}/seasons/${item}/`} style={`--tint: var(--tint-${item});`}>
+            <img src={`/images/home/season-${item}.webp`} alt="" width="80" height="64" />
+            <span>
+              {t.seasons[item]}
+              <Icon name="arrow" size={16} />
+            </span>
+          </a>
+        ))
+      }
+    </nav>
+    <p class="preview-note"><span aria-hidden="true">✦</span> {t.previewNote} <span aria-hidden="true">✦</span></p>
+  </main>
+  <SiteFooter lang={lang} />
+</BaseLayout>
+
+<style>
+  .season-hero {
+    display: grid;
+    gap: var(--space-4);
+    align-items: center;
+    margin: var(--space-4) 0 var(--space-6);
+    padding: var(--space-5);
+    background: var(--tint);
+    border-radius: var(--radius-sm);
+  }
+
+  .season-hero__kicker {
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+  }
+
+  .season-hero h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    font-weight: 500;
+    line-height: 1.05;
+  }
+
+  .season-hero__divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    max-width: 220px;
+    margin: var(--space-3) 0;
+    font-size: 0.875rem;
+  }
+
+  .season-hero__divider::before,
+  .season-hero__divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--color-forest);
+    opacity: 0.55;
+  }
+
+  .season-hero p:last-child {
+    max-width: 36ch;
+    font-size: 1.0625rem;
+  }
+
+  .season-hero img {
+    width: min(220px, 70%);
+    height: auto;
+    justify-self: end;
+  }
+
+  .other-seasons {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-7);
+  }
+
+  .other-seasons a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 108px;
+    padding: var(--space-3);
+    text-align: center;
+    text-decoration: none;
+    background: var(--tint);
+    border-radius: var(--radius-sm);
+  }
+
+  .other-seasons img {
+    height: 56px;
+    width: auto;
+  }
+
+  .other-seasons span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .preview-note {
+    margin-top: var(--space-6);
+    font-size: 0.875rem;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+
+  @media (min-width: 800px) {
+    .season-hero {
+      grid-template-columns: minmax(0, 1fr) 280px;
+      min-height: 280px;
+      padding: var(--space-7);
+    }
+
+    .season-hero img {
+      width: 240px;
+    }
+  }
+</style>

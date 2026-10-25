@@ -1,7 +1,10 @@
 ---
 import Icon from './Icon.astro';
 import CurrencySwitch from './CurrencySwitch.astro';
-import { ui, type Locale } from '../i18n/ui';
+import { ui, type Locale, type SeasonKey } from '../i18n/ui';
+import { shop } from '../i18n/shop';
+import { loadCatalog, text } from '../lib/catalog';
+import { catalogFacets } from '../lib/facets';
 
 interface Props {
   lang: Locale;
@@ -10,6 +13,7 @@ interface Props {
 
 const { lang, path = '' } = Astro.props;
 const t = ui[lang];
+const s = shop[lang];
 const home = `/${lang}/`;
 /** Same order and labels as the chosen switcher: English, then Russian, then Turkish. */
 const languages: { code: Locale; label: string }[] = [
@@ -17,11 +21,27 @@ const languages: { code: Locale; label: string }[] = [
   { code: 'ru', label: 'Russian' },
   { code: 'tr', label: 'Turkish' },
 ];
-const navItems = [
-  { href: `${home}shop/`, label: t.nav.shop },
-  { href: `${home}#seasons`, label: t.nav.seasons },
-  { href: `${home}#about`, label: t.nav.about },
-];
+const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
+const products = await loadCatalog();
+const facets = catalogFacets(products);
+const here = Astro.url.pathname.replace(/\/$/, '');
+const current = (kind: 'shop' | 'seasons' | 'new' | 'about') => {
+  if (kind === 'shop') return /\/shop(\/|$)/.test(here) ? ('page' as const) : undefined;
+  if (kind === 'seasons') return here.includes('/seasons') ? ('page' as const) : undefined;
+  if (kind === 'new') return here.endsWith('/new') ? ('page' as const) : undefined;
+  return here.endsWith('/about') ? ('page' as const) : undefined;
+};
+const searchItems = products.map((product) => {
+  const copy = text(product, lang);
+  const colours = [...new Set(product.variants.map((variant) => variant.colour).filter(Boolean))];
+  return {
+    href: `${home}shop/${product.slug}/`,
+    name: copy.name,
+    subtitle: copy.subtitle,
+    image: product.image,
+    q: [copy.name, copy.subtitle, ...colours, ...colours.map((colour) => s.colours[colour] ?? colour)].join(' ').toLowerCase(),
+  };
+});
 const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[lang];
 ---
 
@@ -42,9 +62,141 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
 
     <nav id="site-nav" class="site-nav" aria-label={t.menu}>
       <ul>
-        {navItems.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        <li class="nav-shop">
+          <a href={`${home}shop/`} aria-current={current('shop')}>{t.nav.shop}</a>
+          <div class="mega">
+            {
+              facets.ages.length > 0 && (
+                <div>
+                  <p>{s.menuByAge}</p>
+                  <ul>
+                    {facets.ages.map((age) => (
+                      <li>
+                        <a href={`${home}shop/?age=${encodeURIComponent(age)}`}>{s.ages[age] ?? age}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            }
+            {
+              facets.categories.length > 0 && (
+                <div>
+                  <p>{s.menuByType}</p>
+                  <ul>
+                    {facets.categories.map((category) => (
+                      <li>
+                        <a href={`${home}shop/?category=${encodeURIComponent(category)}`}>{s.categories[category] ?? category}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            }
+            {
+              facets.genders.length > 0 && (
+                <div>
+                  <p>{s.menuFor}</p>
+                  <ul>
+                    {facets.genders.map((gender) => (
+                      <li>
+                        <a href={`${home}shop/?gender=${encodeURIComponent(gender)}`}>{s.genders[gender] ?? gender}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            }
+            <div>
+              <p>{t.nav.seasons}</p>
+              <ul>
+                {seasons.map((season) => (
+                  <li>
+                    <a href={`${home}seasons/${season}/`}>{t.seasons[season]}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </li>
+        <li><a href={`${home}seasons/`} aria-current={current('seasons')}>{t.nav.seasons}</a></li>
+        <li><a href={`${home}new/`} aria-current={current('new')}>{t.nav.newIn}</a></li>
+        <li><a href={`${home}about/`} aria-current={current('about')}>{t.nav.about}</a></li>
         <li class="site-nav__mobile-only"><a href={`${home}account/`}>{t.account}</a></li>
       </ul>
+      <div class="site-nav__mobile">
+        <ul class="season-links">
+          {
+            seasons.map((season) => (
+              <li>
+                <a href={`${home}seasons/${season}/`} aria-current={here.endsWith(`/seasons/${season}`) ? 'page' : undefined}>
+                  <img src={`/images/home/season-${season}.webp`} alt="" width="72" height="56" />
+                  <span>{t.seasons[season]}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <div class="shop-by">
+          <p>{s.shopBy}</p>
+          {
+            facets.ages.length > 0 && (
+              <details>
+                <summary>{s.filterAge}</summary>
+                <ul>
+                  {facets.ages.map((age) => (
+                    <li>
+                      <a href={`${home}shop/?age=${encodeURIComponent(age)}`}>{s.ages[age] ?? age}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )
+          }
+          {
+            facets.sizes.length > 0 && (
+              <details>
+                <summary>{s.size}</summary>
+                <ul>
+                  {facets.sizes.map((size) => (
+                    <li>
+                      <a href={`${home}shop/?size=${encodeURIComponent(size)}`}>{size}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )
+          }
+          {
+            facets.categories.length > 0 && (
+              <details>
+                <summary>{s.filterType}</summary>
+                <ul>
+                  {facets.categories.map((category) => (
+                    <li>
+                      <a href={`${home}shop/?category=${encodeURIComponent(category)}`}>{s.categories[category] ?? category}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )
+          }
+          {
+            facets.genders.length > 0 && (
+              <details>
+                <summary>{s.filterGender}</summary>
+                <ul>
+                  {facets.genders.map((gender) => (
+                    <li>
+                      <a href={`${home}shop/?gender=${encodeURIComponent(gender)}`}>{s.genders[gender] ?? gender}</a>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )
+          }
+        </div>
+      </div>
     </nav>
 
     <div class="site-header__prefs">
@@ -86,10 +238,10 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
     </div>
 
     <div class="site-header__tools">
-      <a class="icon-btn" href={`${home}shop/`} title={t.search}>
+      <button class="icon-btn" type="button" data-open-search title={t.search}>
         <Icon name="search" />
         <span class="visually-hidden">{t.search}</span>
-      </a>
+      </button>
       <a class="icon-btn hide-mobile" href={`${home}account/`} title={t.account}>
         <Icon name="account" />
         <span class="visually-hidden">{t.account}</span>
@@ -101,6 +253,28 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
       </a>
     </div>
   </div>
+  <dialog id="site-search" class="search-dialog" aria-label={t.search}>
+    <form method="dialog" class="search-dialog__bar">
+      <input type="search" data-search-input placeholder={s.searchPlaceholder} aria-label={s.searchPlaceholder} />
+      <button type="button" data-close-search>{s.searchClose}</button>
+    </form>
+    <ul class="search-dialog__results">
+      {
+        searchItems.map((item) => (
+          <li data-search-item data-q={item.q}>
+            <a href={item.href}>
+              <img src={item.image} alt="" width="72" height="72" />
+              <span>
+                <strong>{item.name}</strong>
+                <em>{item.subtitle}</em>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="search-dialog__empty" data-search-empty hidden>{s.searchEmpty}</p>
+  </dialog>
 </header>
 
 <script>
@@ -110,8 +284,24 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
   const button = header?.querySelector<HTMLButtonElement>('.site-header__menu-btn');
   const backdrop = header?.querySelector<HTMLButtonElement>('.site-header__backdrop');
   const desktop = window.matchMedia('(min-width: 900px)');
+  const searchDialog = header?.querySelector<HTMLDialogElement>('#site-search');
+  const searchOpen = header?.querySelector<HTMLButtonElement>('[data-open-search]');
+  const searchInput = searchDialog?.querySelector<HTMLInputElement>('[data-search-input]');
+  const searchRows = [...(searchDialog?.querySelectorAll<HTMLElement>('[data-search-item]') ?? [])];
+  const searchEmpty = searchDialog?.querySelector<HTMLElement>('[data-search-empty]');
+  const filterSearch = () => {
+    const query = (searchInput?.value ?? '').trim().toLowerCase();
+    let shown = 0;
+    for (const row of searchRows) {
+      const match = query === '' || (row.dataset.q ?? '').includes(query);
+      row.hidden = !match;
+      if (match) shown++;
+    }
+    if (searchEmpty) searchEmpty.hidden = query === '' || shown > 0;
+  };
   const setOpen = (open: boolean) => {
     const next = open && !desktop.matches;
+    if (next) searchDialog?.close();
     header?.setAttribute('data-menu-open', String(next));
     button?.setAttribute('aria-expanded', String(next));
     if (backdrop) backdrop.hidden = !next;
@@ -124,6 +314,17 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
     langSwitch?.setAttribute('data-open', String(open));
     langButton?.setAttribute('aria-expanded', String(open));
   };
+
+  searchOpen?.addEventListener('click', () => {
+    setOpen(false);
+    setLangOpen(false);
+    filterSearch();
+    searchDialog?.showModal();
+    searchInput?.focus();
+  });
+  searchInput?.addEventListener('input', filterSearch);
+  searchDialog?.querySelector('[data-close-search]')?.addEventListener('click', () => searchDialog.close());
+  searchDialog?.querySelector('form')?.addEventListener('submit', (event) => event.preventDefault());
 
   button?.addEventListener('click', () => {
     const open = header?.dataset.menuOpen !== 'true';
@@ -197,6 +398,10 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
 </script>
 
 <style>
+  .mega {
+    display: none;
+  }
+
   .site-header {
     position: sticky;
     top: 0;
@@ -517,6 +722,215 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
 
     .hide-mobile {
       display: inline-flex;
+    }
+
+    .site-nav__mobile,
+    .nav-shop > a {
+      /* desktop uses the same shop link; the panel opens from the item */
+    }
+
+    .nav-shop {
+      position: static;
+    }
+
+    .mega {
+      display: none;
+      position: absolute;
+      right: 0;
+      left: 0;
+      top: 100%;
+      z-index: 3;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-6);
+      padding: var(--space-5) var(--gutter) var(--space-6);
+      background: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-top: 0;
+    }
+
+    .nav-shop:hover .mega,
+    .nav-shop:focus-within .mega {
+      display: grid;
+    }
+
+    .mega p {
+      margin: 0 0 var(--space-2);
+      font-size: 0.8125rem;
+      color: var(--color-text-muted);
+    }
+
+    .mega ul {
+      display: grid;
+      gap: 0;
+    }
+
+    .mega a {
+      min-height: 40px;
+      font-size: 1.0625rem;
+    }
+  }
+
+  .site-nav__mobile {
+    display: none;
+  }
+
+  .site-header[data-menu-open='true'] .site-nav__mobile {
+    display: block;
+    padding-bottom: var(--space-4);
+  }
+
+  .season-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .season-links a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 64px;
+    padding-right: var(--space-2);
+    text-decoration: none;
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+  }
+
+  .season-links img {
+    height: 56px;
+    width: auto;
+  }
+
+  .shop-by {
+    margin-top: var(--space-4);
+  }
+
+  .shop-by > p {
+    margin: 0 0 var(--space-2);
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .shop-by details {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .shop-by summary {
+    display: flex;
+    align-items: center;
+    min-height: var(--control-height);
+    font-size: 1.0625rem;
+    cursor: pointer;
+  }
+
+  .shop-by ul {
+    margin: 0;
+    padding: 0 0 var(--space-3);
+    list-style: none;
+  }
+
+  .shop-by a {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+    text-decoration: none;
+  }
+
+  .search-dialog {
+    width: min(560px, calc(100vw - 32px));
+    max-height: min(70dvh, 640px);
+    padding: 0;
+    color: var(--color-forest);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .search-dialog::backdrop {
+    background: rgb(32 61 43 / 0.35);
+  }
+
+  .search-dialog__bar {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .search-dialog__bar input {
+    flex: 1;
+    min-height: var(--control-height);
+    padding: 0 var(--space-3);
+    font: inherit;
+    color: inherit;
+    background: var(--color-milk);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .search-dialog__bar button {
+    min-height: var(--control-height);
+    padding: 0 var(--space-3);
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .search-dialog__results {
+    margin: 0;
+    padding: var(--space-2) 0;
+    list-style: none;
+    overflow: auto;
+  }
+
+  .search-dialog__results a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    text-decoration: none;
+  }
+
+  .search-dialog__results img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    background: var(--color-photo);
+    border-radius: var(--radius-sm);
+  }
+
+  .search-dialog__results strong,
+  .search-dialog__results em {
+    display: block;
+    font-style: normal;
+  }
+
+  .search-dialog__results em {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+  }
+
+  .search-dialog__empty {
+    padding: 0 var(--space-4) var(--space-4);
+    color: var(--color-text-muted);
+  }
+
+  .search-dialog [hidden] {
+    display: none !important;
+  }
+
+  @media (min-width: 900px) {
+    .site-nav__mobile,
+    .site-header[data-menu-open='true'] .site-nav__mobile {
+      display: none;
     }
   }
 </style>

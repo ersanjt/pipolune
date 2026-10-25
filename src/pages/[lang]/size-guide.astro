@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import PageBand from '../../components/PageBand.astro';
+import { locales, ui, type Locale } from '../../i18n/ui';
+import { loadCatalog, text } from '../../lib/catalog';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Locale;
+const t = ui[lang];
+const products = await loadCatalog();
+const path = 'size-guide/';
+---
+
+<BaseLayout lang={lang} title={`${t.sizeGuideTitle} — Pipolune`} description={t.sizeGuideLead} path={path}>
+  <a class="skip-link" href="#main">{t.skipLink}</a>
+  <SiteHeader lang={lang} path={path} />
+  <main id="main" class="container prose">
+    <PageBand title={t.sizeGuideTitle} subtitle={t.sizeGuideLead} />
+    <p>{t.sizeGuideBody}</p>
+    {
+      products.map((product) => {
+        const copy = text(product, lang);
+        const chart = product.sizeChart;
+        const head = chart ? (chart.head[lang] ?? chart.head.en ?? []) : [];
+        const note = chart ? (chart.note[lang] ?? chart.note.en ?? '') : '';
+        return (
+          <section>
+            <h2>
+              <a href={`/${lang}/shop/${product.slug}/`}>{copy.name}</a>
+            </h2>
+            {chart ? (
+              <>
+                <div class="size-table">
+                  <table>
+                    {head.length > 0 && (
+                      <thead>
+                        <tr>{head.map((cell) => <th scope="col">{cell}</th>)}</tr>
+                      </thead>
+                    )}
+                    <tbody>
+                      {chart.rows.map((row) => (
+                        <tr>{row.map((cell, i) => (i === 0 ? <th scope="row">{cell}</th> : <td>{cell}</td>))}</tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {note && <p class="note">{note}</p>}
+              </>
+            ) : (
+              <p class="note">{t.sizeGuidePending}</p>
+            )}
+          </section>
+        );
+      })
+    }
+    {products.length === 0 && <p>{t.sizeGuideMissing}</p>}
+  </main>
+  <SiteFooter lang={lang} />
+</BaseLayout>
+
+<style>
+  .prose {
+    padding-bottom: var(--space-8);
+  }
+
+  .prose h2 {
+    margin-top: var(--space-6);
+    font-size: clamp(1.5rem, 3vw, 1.875rem);
+    font-weight: 500;
+  }
+
+  .prose h2 a {
+    text-decoration: none;
+  }
+
+  .prose h2 a:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .note {
+    margin-top: var(--space-3);
+    color: var(--color-text-muted);
+  }
+
+  .size-table {
+    margin-top: var(--space-3);
+    overflow-x: auto;
+  }
+
+  .size-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+
+  .size-table th,
+  .size-table td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .size-table thead th {
+    font-weight: 500;
+    color: var(--color-text-muted);
+    white-space: normal;
+    vertical-align: bottom;
+  }
+</style>

@@ -8,13 +8,28 @@ interface Props {
   product: CatalogProduct;
   lang: Locale;
   showPrice?: boolean;
+  order?: number;
 }
 
-const { product, lang, showPrice = true } = Astro.props;
+const { product, lang, showPrice = true, order = 0 } = Astro.props;
 const copy = text(product, lang);
+const sizes = [...new Set(product.variants.map((v) => v.size).filter(Boolean))];
+const colours = [...new Set(product.variants.map((v) => v.colour).filter(Boolean))];
 ---
 
-<li class="product-card" data-season={product.season} data-category={product.category}>
+<li
+  class="product-card"
+  data-product
+  data-order={order}
+  data-season={product.season}
+  data-category={product.category}
+  data-gender={product.gender}
+  data-age={product.ageBand}
+  data-sizes={sizes.join('|')}
+  data-colours={colours.join('|')}
+  data-name={copy.name}
+  data-price={product.prices.TRY}
+>
   <a href={`/${lang}/shop/${product.slug}/`}>
     <div class="product-card__photo">
       <img src={product.image} alt={copy.name} width="279" height="221" loading="lazy" />

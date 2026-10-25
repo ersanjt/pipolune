@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import PageBand from '../../components/PageBand.astro';
+import CatalogView from '../../components/CatalogView.astro';
+import { locales, ui, type Locale } from '../../i18n/ui';
+import { loadCatalog } from '../../lib/catalog';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Locale;
+const t = ui[lang];
+const products = await loadCatalog();
+const path = 'new/';
+---
+
+<BaseLayout lang={lang} title={`${t.newInTitle} — Pipolune`} description={t.newInLead} path={path}>
+  <a class="skip-link" href="#main">{t.skipLink}</a>
+  <SiteHeader lang={lang} path={path} />
+  <main id="main" class="container">
+    <PageBand title={t.newInTitle} subtitle={t.newInLead} />
+    <CatalogView products={products} lang={lang} />
+    <p class="preview-note"><span aria-hidden="true">✦</span> {t.previewNote} <span aria-hidden="true">✦</span></p>
+  </main>
+  <SiteFooter lang={lang} />
+</BaseLayout>
+
+<style>
+  .preview-note {
+    margin-top: var(--space-6);
+    font-size: 0.875rem;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+</style>

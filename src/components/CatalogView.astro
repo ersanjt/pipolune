@@ -1,0 +1,657 @@
+---
+import ProductCard from './ProductCard.astro';
+import { shop } from '../i18n/shop';
+import { ui, type Locale, type SeasonKey } from '../i18n/ui';
+import { catalogFacets } from '../lib/facets';
+import type { CatalogProduct } from '../lib/catalog';
+
+interface Props {
+  products: CatalogProduct[];
+  lang: Locale;
+  /** Season pages already show one collection, so the season filter stays off. */
+  lockSeason?: boolean;
+}
+
+const { products, lang, lockSeason = false } = Astro.props;
+const s = shop[lang];
+const t = ui[lang];
+const facets = catalogFacets(products);
+const label = (map: Record<string, string>, key: string) => map[key] ?? key;
+
+const groups: { key: string; title: string; options: { value: string; label: string }[] }[] = [
+  { key: 'age', title: s.filterAge, options: facets.ages.map((value) => ({ value, label: label(s.ages, value) })) },
+  { key: 'size', title: s.size, options: facets.sizes.map((value) => ({ value, label: value })) },
+  { key: 'category', title: s.filterType, options: facets.categories.map((value) => ({ value, label: label(s.categories, value) })) },
+  { key: 'gender', title: s.filterGender, options: facets.genders.map((value) => ({ value, label: label(s.genders, value) })) },
+  { key: 'colour', title: s.colour, options: facets.colours.map((value) => ({ value, label: label(s.colours, value) })) },
+];
+if (!lockSeason) {
+  groups.push({
+    key: 'season',
+    title: s.filterSeason,
+    options: facets.seasons.map((value) => ({ value, label: t.seasons[value as SeasonKey] ?? value })),
+  });
+}
+const visibleGroups = groups.filter((group) => group.options.length > 0);
+const facetLabels = Object.fromEntries(visibleGroups.map((group) => [group.key, Object.fromEntries(group.options.map((o) => [o.value, o.label]))]));
+---
+
+<form class="catalog" data-catalog data-lock-season={lockSeason ? 'true' : 'false'} data-apply-label={s.applyFilters} data-results-label={s.resultsCount}>
+  <script type="application/json" data-facet-labels set:html={JSON.stringify(facetLabels)} />
+  <div class="catalog-toolbar">
+    <button class="filters-launch" type="button" data-open-filters aria-expanded="false" aria-controls="catalog-filters">
+      {s.filters}
+    </button>
+    <div class="filter-panel" id="catalog-filters" data-filter-panel data-open="false">
+      <div class="filter-panel__head">
+        <h2>{lang === 'tr' ? 'Filtreler' : lang === 'ru' ? 'Фильтры' : 'Filters'}</h2>
+        <button type="button" data-close-filters>{s.closeFilters}</button>
+      </div>
+      <div class="filter-panel__body">
+        {
+          visibleGroups.map((group) => (
+            <details class="facet">
+              <summary>{group.title}</summary>
+              <div class="facet__menu" role="radiogroup" aria-label={group.title}>
+                <label>
+                  <input type="radio" name={group.key} value="" checked />
+                  <span>{s.filterAll}</span>
+                </label>
+                {group.options.map((option) => (
+                  <label>
+                    <input type="radio" name={group.key} value={option.value} />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </details>
+          ))
+        }
+      </div>
+      <div class="filter-panel__bar">
+        <button type="button" data-clear>{s.clearAll}</button>
+        <button type="submit" data-apply>{s.applyFilters.replace('{n}', String(products.length))}</button>
+      </div>
+    </div>
+    <label class="sort">
+      <span>{s.sortBy}</span>
+      <select name="sort">
+        <option value="featured">{s.sortFeatured}</option>
+        <option value="name">{s.sortName}</option>
+        <option value="price-asc">{s.sortPriceLow}</option>
+        <option value="price-desc">{s.sortPriceHigh}</option>
+      </select>
+    </label>
+  </div>
+  <button class="filter-backdrop" type="button" data-close-filters hidden>
+    <span class="visually-hidden">{s.closeFilters}</span>
+  </button>
+  <div class="chip-row" data-chip-row hidden>
+    <div data-chips></div>
+    <button type="button" data-clear>{s.clearAll}</button>
+  </div>
+  <p class="catalog-count" data-count aria-live="polite"></p>
+  <ul class="product-grid" data-products>
+    {products.map((product, order) => <ProductCard product={product} lang={lang} order={order} />)}
+  </ul>
+  <p class="empty" data-empty hidden>{s.noProducts}</p>
+</form>
+
+<script>
+  const FILTERS = ['age', 'size', 'category', 'gender', 'colour', 'season'];
+
+  document.querySelectorAll<HTMLFormElement>('[data-catalog]').forEach((form) => {
+    if (form.dataset.ready === 'true') return;
+    form.dataset.ready = 'true';
+
+    const cards = [...form.querySelectorAll<HTMLElement>('[data-product]')];
+    const list = form.querySelector<HTMLElement>('[data-products]');
+    const empty = form.querySelector<HTMLElement>('[data-empty]');
+    const chips = form.querySelector<HTMLElement>('[data-chips]');
+    const chipRow = form.querySelector<HTMLElement>('[data-chip-row]');
+    const countEl = form.querySelector<HTMLElement>('[data-count]');
+    const applyBtn = form.querySelector<HTMLButtonElement>('[data-apply]');
+    const panel = form.querySelector<HTMLElement>('[data-filter-panel]');
+    const openBtn = form.querySelector<HTMLButtonElement>('[data-open-filters]');
+    const backdrop = form.querySelector<HTMLButtonElement>('.filter-backdrop');
+    const labelsEl = form.querySelector('[data-facet-labels]');
+    const labels = labelsEl?.textContent ? (JSON.parse(labelsEl.textContent) as Record<string, Record<string, string>>) : {};
+    const locked = form.dataset.lockSeason === 'true';
+    const desktop = window.matchMedia('(min-width: 900px)');
+    const facets = [...form.querySelectorAll<HTMLDetailsElement>('details.facet')];
+    const showFacetGroups = () => {
+      facets.forEach((details) => {
+        if (!desktop.matches) details.open = true;
+      });
+    };
+    showFacetGroups();
+    facets.forEach((details) => {
+      details.addEventListener('click', (event) => {
+        if (desktop.matches) return;
+        if (event.target instanceof Element && event.target.closest('summary')) event.preventDefault();
+      });
+    });
+    const applyLabel = form.dataset.applyLabel ?? 'Apply filters ({n})';
+    const resultsLabel = form.dataset.resultsLabel ?? '{n}';
+    let snapshot: FormData | null = null;
+
+    const fill = (template: string, n: number) => template.replace('{n}', String(n));
+
+    function read() {
+      const data = new FormData(form);
+      const state: Record<string, string> = { sort: String(data.get('sort') ?? 'featured') };
+      for (const key of FILTERS) state[key] = String(data.get(key) ?? '');
+      return state;
+    }
+
+    function matches(card: HTMLElement, state: Record<string, string>) {
+      if (state.season && card.dataset.season !== state.season && card.dataset.season !== 'all') return false;
+      if (state.category && card.dataset.category !== state.category) return false;
+      if (state.gender && card.dataset.gender !== state.gender) return false;
+      if (state.age && card.dataset.age !== state.age) return false;
+      if (state.size && !(card.dataset.sizes ?? '').split('|').includes(state.size)) return false;
+      if (state.colour && !(card.dataset.colours ?? '').split('|').includes(state.colour)) return false;
+      return true;
+    }
+
+    function ranked(state: Record<string, string>) {
+      const name = (card: HTMLElement) => card.dataset.name ?? '';
+      const price = (card: HTMLElement) => Number(card.dataset.price ?? 0);
+      const order = (card: HTMLElement) => Number(card.dataset.order ?? 0);
+      return [...cards].sort((a, b) => {
+        if (state.sort === 'name') return name(a).localeCompare(name(b), document.documentElement.lang);
+        if (state.sort === 'price-asc') return price(a) - price(b);
+        if (state.sort === 'price-desc') return price(b) - price(a);
+        return order(a) - order(b);
+      });
+    }
+
+    function writeUrl(state: Record<string, string>) {
+      const next = new URLSearchParams();
+      for (const key of [...FILTERS, 'sort']) {
+        if (!state[key]) continue;
+        if (key === 'season' && locked) continue;
+        if (key === 'sort' && state[key] === 'featured') continue;
+        next.set(key, state[key]);
+      }
+      const url = next.size ? `${location.pathname}?${next}` : location.pathname;
+      if (`${location.pathname}${location.search}` !== url) history.replaceState(null, '', url);
+    }
+
+    function renderChips(state: Record<string, string>) {
+      if (!chips || !chipRow) return;
+      chips.replaceChildren();
+      let active = 0;
+      for (const key of FILTERS) {
+        if (!state[key] || (key === 'season' && locked)) continue;
+        active++;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'chip';
+        button.textContent = labels[key]?.[state[key]] ?? state[key];
+        button.addEventListener('click', () => {
+          const all = form.querySelector<HTMLInputElement>(`input[name="${key}"][value=""]`);
+          if (all) all.checked = true;
+          apply(true);
+        });
+        chips.append(button);
+      }
+      if (state.sort && state.sort !== 'featured') active++;
+      chipRow.hidden = active === 0;
+    }
+
+    function apply(push: boolean) {
+      const state = read();
+      let shown = 0;
+      for (const card of cards) {
+        const ok = matches(card, state);
+        card.hidden = !ok;
+        if (ok) shown++;
+      }
+      if (list) for (const card of ranked(state)) list.append(card);
+      if (empty) empty.hidden = shown > 0;
+      if (countEl) countEl.textContent = fill(resultsLabel, shown);
+      if (applyBtn) applyBtn.textContent = fill(applyLabel, shown);
+      form.querySelectorAll<HTMLDetailsElement>('details.facet').forEach((details) => {
+        const checked = details.querySelector<HTMLInputElement>('input:checked');
+        details.dataset.active = checked?.value ? 'true' : 'false';
+      });
+      renderChips(state);
+      if (push) writeUrl(state);
+    }
+
+    function pendingCount() {
+      const state = read();
+      return cards.filter((card) => matches(card, state)).length;
+    }
+
+    function setOpen(open: boolean) {
+      if (!panel) return;
+      const next = open && !desktop.matches;
+      if (!next && panel.dataset.open === 'true') restore();
+      if (next) snapshot = new FormData(form);
+      panel.dataset.open = String(next);
+      if (backdrop) backdrop.hidden = !next;
+      openBtn?.setAttribute('aria-expanded', String(next));
+      document.documentElement.classList.toggle('filters-open', next);
+      if (next) {
+        showFacetGroups();
+        panel.querySelector<HTMLButtonElement>('[data-close-filters]')?.focus();
+      }
+    }
+
+    function restore() {
+      if (!snapshot) return;
+      const saved = snapshot;
+      snapshot = null;
+      for (const [key, value] of saved.entries()) {
+        const named = [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement>(`[name="${CSS.escape(key)}"]`)];
+        const select = named.find((el) => el instanceof HTMLSelectElement);
+        if (select instanceof HTMLSelectElement) {
+          select.value = String(value);
+          continue;
+        }
+        const input = named.find((el) => el instanceof HTMLInputElement && el.value === String(value));
+        if (input instanceof HTMLInputElement) input.checked = true;
+      }
+      snapshot = null;
+    }
+
+    const params = new URLSearchParams(location.search);
+    for (const key of [...FILTERS, 'sort']) {
+      const value = params.get(key);
+      if (!value) continue;
+      if (key === 'season' && locked) continue;
+      if (key === 'sort') {
+        const select = form.querySelector<HTMLSelectElement>('select[name="sort"]');
+        if (select && [...select.options].some((option) => option.value === value)) select.value = value;
+        continue;
+      }
+      const input = form.querySelector<HTMLInputElement>(`input[name="${key}"][value="${CSS.escape(value)}"]`);
+      if (input) input.checked = true;
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      snapshot = null;
+      apply(true);
+      setOpen(false);
+    });
+    form.addEventListener('change', (event) => {
+      const target = event.target;
+      if (desktop.matches || (target instanceof HTMLSelectElement && target.name === 'sort')) apply(true);
+      else if (applyBtn) applyBtn.textContent = fill(applyLabel, pendingCount());
+    });
+    form.querySelectorAll<HTMLButtonElement>('[data-clear]').forEach((button) => {
+      button.addEventListener('click', () => {
+        form.querySelectorAll<HTMLInputElement>('input[type="radio"][value=""]').forEach((input) => {
+          input.checked = true;
+        });
+        const select = form.querySelector<HTMLSelectElement>('select[name="sort"]');
+        if (select) select.value = 'featured';
+        snapshot = null;
+        apply(true);
+        setOpen(false);
+      });
+    });
+    openBtn?.addEventListener('click', () => setOpen(panel?.dataset.open !== 'true'));
+    form.querySelectorAll('[data-close-filters]').forEach((button) => {
+      button.addEventListener('click', () => {
+        setOpen(false);
+        if (applyBtn) applyBtn.textContent = fill(applyLabel, cards.filter((card) => !card.hidden).length);
+      });
+    });
+    form.querySelectorAll<HTMLDetailsElement>('details.facet').forEach((details) => {
+      details.addEventListener('toggle', () => {
+        if (!details.open || !desktop.matches) return;
+        form.querySelectorAll<HTMLDetailsElement>('details.facet').forEach((other) => {
+          if (other !== details) other.open = false;
+        });
+      });
+    });
+    document.addEventListener('click', (event) => {
+      if (!desktop.matches || !(event.target instanceof Node)) return;
+      form.querySelectorAll<HTMLDetailsElement>('details.facet[open]').forEach((details) => {
+        if (!details.contains(event.target as Node)) details.open = false;
+      });
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || panel?.dataset.open !== 'true') return;
+      restore();
+      setOpen(false);
+      openBtn?.focus();
+    });
+    desktop.addEventListener('change', () => {
+      if (desktop.matches) {
+        setOpen(false);
+        facets.forEach((details) => {
+          details.open = false;
+        });
+      } else showFacetGroups();
+    });
+
+    apply(false);
+  });
+</script>
+
+<style>
+  .catalog-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .filters-launch,
+  .filter-panel__head button,
+  .filter-panel__bar button,
+  .chip,
+  .chip-row > button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .filters-launch {
+    min-height: var(--control-height);
+    padding: 0 var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+  }
+
+  .filter-panel__head h2 {
+    margin: 0;
+    font-family: var(--font-text);
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .filter-panel {
+    display: none;
+  }
+
+  .filter-panel[data-open='true'] {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    max-height: min(85dvh, 720px);
+    overflow: auto;
+    background: var(--color-milk);
+    border-top: 1px solid var(--color-line);
+    border-radius: 12px 12px 0 0;
+  }
+
+  .filter-panel__head,
+  .filter-panel__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .filter-panel__head button,
+  .filter-panel__bar button[data-clear],
+  .chip-row > button {
+    min-height: var(--control-height);
+    padding: 0 var(--space-3);
+    background: none;
+    border: 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .filter-panel__body {
+    padding: 0 var(--space-4) var(--space-3);
+  }
+
+  .filter-panel__bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-milk);
+    border-top: 1px solid var(--color-line);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  }
+
+  .filter-panel__bar button[type='submit'] {
+    flex: 1;
+    min-height: 48px;
+    color: var(--color-milk);
+    background: var(--color-forest);
+    border: 0;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+  }
+
+  .filter-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    padding: 0;
+    background: rgb(32 61 43 / 0.35);
+    border: 0;
+  }
+
+  .filter-backdrop[hidden],
+  .chip-row[hidden],
+  .empty[hidden] {
+    display: none !important;
+  }
+
+  .facet summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--control-height);
+    font-size: 1rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .facet summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .facet__menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding-bottom: var(--space-4);
+  }
+
+  .facet input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .facet label {
+    position: relative;
+  }
+
+  .facet span {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height);
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .facet input:checked + span {
+    color: var(--color-milk);
+    background: var(--color-forest);
+    border-color: var(--color-forest);
+  }
+
+  .facet input:focus-visible + span {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 2px;
+  }
+
+  .sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-left: auto;
+    font-size: 0.9375rem;
+  }
+
+  .sort select {
+    max-width: 46vw;
+    min-height: var(--control-height);
+    padding: 0 var(--space-2);
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  .chip-row [data-chips] {
+    display: contents;
+  }
+
+  .chip {
+    min-height: 36px;
+    padding: 0 var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-forest);
+    border-radius: 999px;
+  }
+
+  .catalog-count {
+    margin: 0 0 var(--space-3);
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .empty {
+    padding: var(--space-6) 0;
+    color: var(--color-text-muted);
+  }
+
+  :global(html.filters-open),
+  :global(html.filters-open body) {
+    overflow: hidden;
+  }
+
+  @media (min-width: 900px) {
+    .filters-launch,
+    .filter-panel__head,
+    .filter-panel__bar,
+    .filter-backdrop {
+      display: none !important;
+    }
+
+    .filter-panel,
+    .filter-panel[data-open='true'] {
+      position: static;
+      display: flex;
+      flex: 1;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--space-2) var(--space-5);
+      max-height: none;
+      overflow: visible;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .filter-panel__body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2) var(--space-5);
+      padding: 0;
+    }
+
+    .facet {
+      position: relative;
+    }
+
+    .facet summary {
+      gap: var(--space-2);
+      justify-content: flex-start;
+    }
+
+    .facet summary::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: translateY(-2px) rotate(45deg);
+    }
+
+    .facet[data-active='true'] summary {
+      text-decoration: underline;
+      text-underline-offset: 6px;
+    }
+
+    .facet__menu {
+      display: none;
+      position: absolute;
+      top: calc(100% - 4px);
+      left: 0;
+      z-index: 5;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 0;
+      min-width: 196px;
+      padding: var(--space-2) 0;
+      background: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius-sm);
+    }
+
+    .facet[open] .facet__menu {
+      display: flex;
+    }
+
+    .facet span {
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .facet input:checked + span {
+      color: var(--color-forest);
+      background: transparent;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .sort select {
+      max-width: none;
+    }
+
+    .product-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+  }
+</style>

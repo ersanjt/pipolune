@@ -34,8 +34,9 @@ const current = (href: string, exact = false) => {
       <summary>{t.nav.shop}</summary>
       <ul>
         <li><a href={`${home}shop/`}>{t.nav.shop}</a></li>
-        <li><a href={`${home}#seasons`}>{t.nav.seasons}</a></li>
-        <li><a href={`${home}#about`}>{t.nav.about}</a></li>
+        <li><a href={`${home}new/`}>{t.nav.newIn}</a></li>
+        <li><a href={`${home}seasons/`}>{t.nav.seasons}</a></li>
+        <li><a href={`${home}about/`}>{t.nav.about}</a></li>
         <li><a href={`${home}account/`}>{t.account}</a></li>
       </ul>
     </details>
@@ -43,9 +44,10 @@ const current = (href: string, exact = false) => {
     <details class="footer-col" data-footer-col open>
       <summary>{t.footerHelp}</summary>
       <ul>
+        <li><a href={`${home}size-guide/`}>{t.sizeGuideTitle}</a></li>
         <li><a href={`${home}legal/delivery/`}>{copy.documents.delivery.title}</a></li>
         <li><a href={`${home}legal/returns/`}>{copy.documents.returns.title}</a></li>
-        <li><a href="mailto:info@pipolune.com">{t.footerContact}</a></li>
+        <li><a href={`${home}contact/`}>{t.footerContact}</a></li>
       </ul>
     </details>
 

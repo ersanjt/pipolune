@@ -3,8 +3,8 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SiteHeader from '../../../components/SiteHeader.astro';
 import SiteFooter from '../../../components/SiteFooter.astro';
 import PageBand from '../../../components/PageBand.astro';
-import ProductCard from '../../../components/ProductCard.astro';
-import { locales, ui, type Locale, type SeasonKey } from '../../../i18n/ui';
+import CatalogView from '../../../components/CatalogView.astro';
+import { locales, ui, type Locale } from '../../../i18n/ui';
 import { shop } from '../../../i18n/shop';
 import { loadCatalog } from '../../../lib/catalog';
 
@@ -16,8 +16,6 @@ const lang = Astro.params.lang as Locale;
 const t = ui[lang];
 const s = shop[lang];
 const products = await loadCatalog();
-const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
-const categories = [...new Set(products.map((p) => p.category).filter(Boolean))];
 ---
 
 <BaseLayout lang={lang} title={`${s.shopTitle} — Pipolune`} description={s.shopLead} path="shop/">
@@ -25,134 +23,17 @@ const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
   <SiteHeader lang={lang} path="shop/" />
   <main id="main" class="container">
     <PageBand title={s.shopTitle} subtitle={s.shopLead} />
-
-    <form class="filters" aria-label={s.filterSeason} data-filters>
-      <div class="filters__group" role="radiogroup" aria-label={s.filterSeason}>
-        <label><input type="radio" name="season" value="" checked /> <span>{s.seasonAll}</span></label>
-        {seasons.map((season) => <label><input type="radio" name="season" value={season} /> <span>{t.seasons[season]}</span></label>)}
-      </div>
-      {
-        categories.length > 1 && (
-          <div class="filters__group" role="radiogroup" aria-label={s.filterType}>
-            <label><input type="radio" name="category" value="" checked /> <span>{s.filterAll}</span></label>
-            {categories.map((c) => <label><input type="radio" name="category" value={c} /> <span>{s.categories[c] ?? c}</span></label>)}
-          </div>
-        )
-      }
-    </form>
-
-    <ul class="product-grid" data-products>
-      {products.map((product) => <ProductCard product={product} lang={lang} />)}
-    </ul>
-    <p class="muted empty" data-empty hidden>{s.noProducts}</p>
+    <CatalogView products={products} lang={lang} />
     <p class="preview-note"><span aria-hidden="true">✦</span> {t.previewNote} <span aria-hidden="true">✦</span></p>
   </main>
   <SiteFooter lang={lang} />
 </BaseLayout>
 
-<script>
-  // Filters work on the static list and keep their state in the URL (?season=spring&category=dress).
-  const form = document.querySelector<HTMLFormElement>('[data-filters]');
-  const cards = [...document.querySelectorAll<HTMLElement>('[data-products] > li')];
-  const empty = document.querySelector<HTMLElement>('[data-empty]');
-  const params = new URLSearchParams(location.search);
-
-  for (const key of ['season', 'category']) {
-    const value = params.get(key);
-    const input = value && form?.querySelector<HTMLInputElement>(`input[name="${key}"][value="${CSS.escape(value)}"]`);
-    if (input) input.checked = true;
-  }
-
-  function apply() {
-    const data = new FormData(form!);
-    const season = String(data.get('season') ?? '');
-    const category = String(data.get('category') ?? '');
-    let shown = 0;
-    for (const card of cards) {
-      const match = (!season || card.dataset.season === season || card.dataset.season === 'all') && (!category || card.dataset.category === category);
-      card.hidden = !match;
-      if (match) shown++;
-    }
-    if (empty) empty.hidden = shown > 0;
-    const next = new URLSearchParams();
-    if (season) next.set('season', season);
-    if (category) next.set('category', category);
-    history.replaceState(null, '', next.size ? `?${next}` : location.pathname);
-  }
-
-  form?.addEventListener('change', apply);
-  apply();
-</script>
-
 <style>
-  .filters {
-    display: grid;
-    gap: var(--space-3);
-    margin-bottom: var(--space-5);
-  }
-
-  .filters__group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-
-  .filters label {
-    position: relative;
-  }
-
-  .filters input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .filters span {
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--control-height);
-    padding: 0 var(--space-4);
-    font-size: 0.9375rem;
-    border: 1px solid var(--color-line);
-    border-radius: 999px;
-    cursor: pointer;
-  }
-
-  .filters input:checked + span {
-    color: var(--color-milk);
-    background: var(--color-forest);
-    border-color: var(--color-forest);
-  }
-
-  .filters input:focus-visible + span {
-    outline: 2px solid var(--color-forest);
-    outline-offset: 2px;
-  }
-
-  .product-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .empty {
-    padding: var(--space-6) 0;
-  }
-
   .preview-note {
     margin-top: var(--space-6);
     font-size: 0.875rem;
     text-align: center;
     color: var(--color-text-muted);
-  }
-
-  @media (min-width: 900px) {
-    .product-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--space-4);
-    }
   }
 </style>
