@@ -46,7 +46,7 @@ src/               website source (Astro)
 
 ## Development
 
-Requires Node.js 22+.
+Requires Node.js 24 (or 22.23.4+).
 
 ```bash
 npm install
