@@ -24,6 +24,12 @@ const languages: { code: Locale; label: string }[] = [
 const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
 const products = await loadCatalog();
 const facets = catalogFacets(products);
+const departments = [
+  { href: 'shop/?gender=girl', label: s.genders.girl },
+  { href: 'shop/?gender=boy', label: s.genders.boy },
+  { href: 'shop/?category=accessory', label: s.categories.accessory },
+  { href: 'shop/?gender=mother', label: s.genders.mother },
+];
 const here = Astro.url.pathname.replace(/\/$/, '');
 const current = (kind: 'shop' | 'seasons' | 'new' | 'about') => {
   if (kind === 'shop') return /\/shop(\/|$)/.test(here) ? ('page' as const) : undefined;
@@ -65,6 +71,16 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
         <li class="nav-shop">
           <a href={`${home}shop/`} aria-current={current('shop')}>{t.nav.shop}</a>
           <div class="mega">
+            <div>
+              <p>{s.departments}</p>
+              <ul>
+                {departments.map((item) => (
+                  <li>
+                    <a href={`${home}${item.href}`}>{item.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
             {
               facets.ages.length > 0 && (
                 <div>
@@ -122,6 +138,7 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
         <li><a href={`${home}seasons/`} aria-current={current('seasons')}>{t.nav.seasons}</a></li>
         <li><a href={`${home}new/`} aria-current={current('new')}>{t.nav.newIn}</a></li>
         <li><a href={`${home}about/`} aria-current={current('about')}>{t.nav.about}</a></li>
+        <li class="site-nav__mobile-only"><a href={`${home}wishlist/`}>{s.wishlist}</a></li>
         <li class="site-nav__mobile-only"><a href={`${home}account/`}>{t.account}</a></li>
       </ul>
       <div class="site-nav__mobile">
@@ -139,6 +156,16 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
         </ul>
         <div class="shop-by">
           <p>{s.shopBy}</p>
+          <details open>
+            <summary>{s.departments}</summary>
+            <ul>
+              {departments.map((item) => (
+                <li>
+                  <a href={`${home}${item.href}`}>{item.label}</a>
+                </li>
+              ))}
+            </ul>
+          </details>
           {
             facets.ages.length > 0 && (
               <details>
@@ -242,6 +269,13 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
         <Icon name="search" />
         <span class="visually-hidden">{t.search}</span>
       </button>
+      <a class="icon-btn hide-mobile" href={`${home}wishlist/`} title={s.wishlist}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.4 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z" />
+        </svg>
+        <span class="visually-hidden">{s.wishlist}</span>
+        <span class="bag-link__count" data-wish-count hidden></span>
+      </a>
       <a class="icon-btn hide-mobile" href={`${home}account/`} title={t.account}>
         <Icon name="account" />
         <span class="visually-hidden">{t.account}</span>
@@ -279,6 +313,7 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
 
 <script>
   import { getSession, onSession, rememberLanguage, type Session } from '../lib/session';
+  import { bindWishlist } from '../lib/wishlist';
 
   const header = document.querySelector<HTMLElement>('.site-header');
   const button = header?.querySelector<HTMLButtonElement>('.site-header__menu-btn');
@@ -395,6 +430,7 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
   };
   onSession(render);
   getSession().then(render).catch(() => {});
+  bindWishlist();
 </script>
 
 <style>
@@ -740,7 +776,7 @@ const currencyLabel = { en: 'Currency', tr: 'Para birimi', ru: 'Валюта' }[
       left: 0;
       top: 100%;
       z-index: 3;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
       gap: var(--space-6);
       padding: var(--space-5) var(--gutter) var(--space-6);
       background: var(--color-surface);

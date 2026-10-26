@@ -12,6 +12,20 @@ export interface SettingsResponse {
     homepage_mode: string;
     shipping_standard: Record<Currency, number | null>;
     catalog_preview: boolean;
+    store?: {
+      tradeName: string;
+      legalName: string;
+      phone: string;
+      email: string;
+      line1: string;
+      line2: string;
+      postalCode: string;
+      district: string;
+      city: string;
+      country: string;
+      taxNumber: string;
+      mersis: string;
+    };
   };
   season: { season: string; mode: string; night: boolean };
   paymentProvider?: string | null;

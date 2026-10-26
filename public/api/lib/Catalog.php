@@ -6,7 +6,8 @@ namespace Pipolune;
 final class Catalog
 {
     public const SEASONS = ['spring', 'summer', 'autumn', 'winter', 'all'];
-    public const GENDERS = ['girl', 'boy', 'unisex'];
+    public const GENDERS = ['girl', 'boy', 'unisex', 'mother'];
+    public const CATEGORIES = ['jumpsuit', 'dress', 'cardigan', 'blouse', 'outerwear', 'set', 'shoes', 'hat', 'accessory', 'care'];
     public const STATUSES = ['draft', 'active', 'archived'];
 
     /** Storefront list. $locale null returns every translation (used by the static site build). */
@@ -206,11 +207,18 @@ final class Catalog
             if (Db::value('SELECT id FROM products WHERE slug = ? AND id <> ?', [$slug, $id ?? 0])) {
                 $in->fail('slug', 'taken');
             }
+            $categories = self::CATEGORIES;
+            if ($id !== null) {
+                $existing = Db::value('SELECT category FROM products WHERE id = ?', [$id]);
+                if (is_string($existing) && $existing !== '' && !in_array($existing, $categories, true)) {
+                    $categories[] = $existing;
+                }
+            }
             $row += [
                 'slug' => $slug,
                 'status' => $manage ? ($in->oneOf('status', self::STATUSES) ?? 'draft') : 'draft',
                 'season' => $in->oneOf('season', self::SEASONS) ?? 'all',
-                'category' => $in->str('category', 40) ?? '',
+                'category' => $in->oneOf('category', $categories) ?? '',
                 'gender' => $in->oneOf('gender', self::GENDERS) ?? 'unisex',
                 'age_band' => $in->str('ageBand', 20) ?? '',
                 'sort_order' => $in->int('sortOrder', -9999, 9999) ?? 0,

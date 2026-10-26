@@ -41,6 +41,9 @@ interface Dictionary {
   aboutMore: string;
   contactTitle: string;
   contactLead: string;
+  contactMeta: string;
+  contactPlace: string;
+  directions: string;
   sizeGuideTitle: string;
   sizeGuideLead: string;
   sizeGuideBody: string;
@@ -62,7 +65,7 @@ export const ui: Record<Locale, Dictionary> = {
   en: {
     metaTitle: 'Pipolune — A little wonder, every season',
     metaDescription:
-      'Timeless clothing for curious children, inspired by the quiet magic of the forest. Our first collection is in preparation.',
+      'Clothes and accessories for children and mothers, from a woodland boutique in Kağıthane, Istanbul.',
     skipLink: 'Skip to content',
     languageLabel: 'Language',
     nav: { shop: 'Shop', seasons: 'Seasons', newIn: 'New in', about: 'About' },
@@ -99,9 +102,12 @@ export const ui: Record<Locale, Dictionary> = {
     newInTitle: 'New in',
     newInLead: 'The latest pieces added to the shop.',
     aboutMore:
-      'The shop follows the year in Europe/Istanbul: spring, summer, autumn and winter. Pieces are chosen for curious children, with room to grow and a quiet woodland palette.',
+      'The shop follows the year in Europe/Istanbul: spring, summer, autumn and winter. There are pieces for girls, boys and mothers, and accessories to go with them, with room to grow and a quiet woodland palette.',
     contactTitle: 'Contact',
-    contactLead: 'Write to us about a piece, an order or the shop.',
+    contactLead: 'The shop is in Kağıthane, Istanbul.',
+    contactMeta:
+      'Pipolune, Merkez Mahallesi, Lale Sokak No: 4-6, Kat 4 Kapı 7, 34406 Kağıthane, Istanbul. Telephone +90 554 606 00 98.',
+    contactPlace: 'Kağıthane, Istanbul',
     sizeGuideTitle: 'Size guide',
     sizeGuideLead: 'Choose a size from the measurements of the piece, not a guess.',
     sizeGuideBody:
@@ -112,12 +118,13 @@ export const ui: Record<Locale, Dictionary> = {
     previewNote: 'Design preview · illustrative products',
     aboutTitle: 'About Pipolune',
     aboutBody:
-      "A children's woodland boutique for Türkiye: timeless pieces for curious little ones, changing with the four seasons.",
+      'A woodland boutique in Kağıthane, Istanbul, for children and mothers: clothes and accessories that change with the four seasons.',
     statusBody:
       'Our first collection is in preparation. The online shop is not open yet, and we are not taking orders or payments.',
     statusOpenBody:
       'Our first collection is here. You can send an order request online; we confirm availability, delivery and payment with you by email before anything is charged.',
-    contactBody: 'Write to us:',
+    contactBody: 'For a piece, an order or a visit, write or call. We answer in Turkish, English and Russian.',
+    directions: 'Open in maps',
     notFoundTitle: 'Page not found',
     notFoundBody: 'This path does not lead anywhere yet.',
     notFoundAction: 'Back to home',
@@ -125,7 +132,7 @@ export const ui: Record<Locale, Dictionary> = {
   tr: {
     metaTitle: 'Pipolune — Her mevsim küçük bir mucize',
     metaDescription:
-      'Ormanın sessiz büyüsünden ilham alan, meraklı çocuklar için zamansız giysiler. İlk koleksiyonumuz hazırlanıyor.',
+      'Kağıthane, İstanbul’da çocuklar ve anneler için giysi ve aksesuar. Orman esintili bir butik: kız, erkek ve anne.',
     skipLink: 'İçeriğe geç',
     languageLabel: 'Dil',
     nav: { shop: 'Mağaza', seasons: 'Mevsimler', newIn: 'Yeni gelenler', about: 'Hakkımızda' },
@@ -162,9 +169,12 @@ export const ui: Record<Locale, Dictionary> = {
     newInTitle: 'Yeni gelenler',
     newInLead: 'Mağazaya yeni eklenen parçalar.',
     aboutMore:
-      'Mağaza yılı Avrupa/İstanbul takvimine göre izler: ilkbahar, yaz, sonbahar ve kış. Parçalar meraklı çocuklar için seçilir; büyümek için pay bırakır ve sakin bir orman paletine uyar.',
+      'Mağaza yılı Avrupa/İstanbul takvimine göre izler: ilkbahar, yaz, sonbahar ve kış. Kız, erkek ve anne için parçalar ve onlara eşlik eden aksesuarlar vardır; büyümek için pay bırakır ve sakin bir orman paletine uyar.',
     contactTitle: 'İletişim',
-    contactLead: 'Bir parça, sipariş veya mağaza hakkında bize yazın.',
+    contactLead: 'Mağaza İstanbul Kağıthane’de.',
+    contactMeta:
+      'Pipolune, Merkez Mahallesi, Lale Sokak No: 4-6, Kat 4 Kapı 7, 34406 Kağıthane, İstanbul. Telefon +90 554 606 00 98.',
+    contactPlace: 'Kağıthane, İstanbul',
     sizeGuideTitle: 'Beden rehberi',
     sizeGuideLead: 'Bedeni tahmine göre değil, parçanın ölçülerine göre seçin.',
     sizeGuideBody:
@@ -175,12 +185,13 @@ export const ui: Record<Locale, Dictionary> = {
     previewNote: 'Tasarım önizlemesi · örnek ürünler',
     aboutTitle: 'Pipolune hakkında',
     aboutBody:
-      'Türkiye için orman temalı bir çocuk butiği: dört mevsimle değişen, meraklı küçükler için zamansız parçalar.',
+      'Kağıthane, İstanbul’da çocuklar ve anneler için orman esintili bir butik: dört mevsimle değişen giysiler ve aksesuarlar.',
     statusBody:
       'İlk koleksiyonumuz hazırlanıyor. Online mağaza henüz açılmadı; şu anda sipariş veya ödeme alınmıyor.',
     statusOpenBody:
       'İlk koleksiyonumuz burada. Online sipariş talebi gönderebilirsiniz; herhangi bir ödeme alınmadan önce stok, teslimat ve ödemeyi sizinle e-postayla onaylıyoruz.',
-    contactBody: 'Bize yazın:',
+    contactBody: 'Bir parça, sipariş veya ziyaret için yazın ya da arayın. Türkçe, İngilizce ve Rusça yanıtlarız.',
+    directions: 'Haritada aç',
     notFoundTitle: 'Sayfa bulunamadı',
     notFoundBody: 'Bu yol henüz bir yere çıkmıyor.',
     notFoundAction: 'Ana sayfaya dön',
@@ -188,7 +199,7 @@ export const ui: Record<Locale, Dictionary> = {
   ru: {
     metaTitle: 'Pipolune — Маленькое чудо в каждом сезоне',
     metaDescription:
-      'Вневременная одежда для любознательных детей, вдохновлённая тихим волшебством леса. Первая коллекция готовится.',
+      'Одежда и аксессуары для детей и мам. Лесной бутик в Кагытхане, Стамбул: для девочек, мальчиков и мам.',
     skipLink: 'Перейти к содержанию',
     languageLabel: 'Язык',
     nav: { shop: 'Магазин', seasons: 'Сезоны', newIn: 'Новинки', about: 'О нас' },
@@ -225,9 +236,12 @@ export const ui: Record<Locale, Dictionary> = {
     newInTitle: 'Новинки',
     newInLead: 'Вещи, которые недавно появились в магазине.',
     aboutMore:
-      'Магазин идёт за годом по календарю Европы/Стамбула: весна, лето, осень и зима. Вещи выбраны для любознательных детей: с запасом на вырост и спокойной лесной палитрой.',
+      'Магазин идёт за годом по календарю Европы/Стамбула: весна, лето, осень и зима. Есть вещи для девочек, мальчиков и мам и аксессуары к ним, с запасом на вырост и спокойной лесной палитрой.',
     contactTitle: 'Контакты',
-    contactLead: 'Напишите нам о вещи, заказе или магазине.',
+    contactLead: 'Магазин в Кагытхане, Стамбул.',
+    contactMeta:
+      'Pipolune, Merkez Mahallesi, Lale Sokak No: 4-6, Kat 4 Kapı 7, 34406 Кагытхане, Стамбул. Телефон +90 554 606 00 98.',
+    contactPlace: 'Кагытхане, Стамбул',
     sizeGuideTitle: 'Таблица размеров',
     sizeGuideLead: 'Выбирайте размер по меркам вещи, а не наугад.',
     sizeGuideBody:
@@ -238,12 +252,13 @@ export const ui: Record<Locale, Dictionary> = {
     previewNote: 'Дизайн-превью · примеры товаров',
     aboutTitle: 'О Pipolune',
     aboutBody:
-      'Детский бутик в лесной эстетике для Турции: вневременные вещи для любознательных малышей, меняющиеся вместе с четырьмя сезонами.',
+      'Лесной бутик в Кагытхане, Стамбул, для детей и мам: одежда и аксессуары, которые меняются вместе с четырьмя сезонами.',
     statusBody:
       'Первая коллекция готовится. Интернет-магазин ещё не открыт: заказы и оплата сейчас не принимаются.',
     statusOpenBody:
       'Первая коллекция уже здесь. Можно отправить запрос заказа онлайн: до любой оплаты мы подтвердим с вами наличие, доставку и оплату по email.',
-    contactBody: 'Напишите нам:',
+    contactBody: 'Напишите или позвоните о вещи, заказе или визите. Отвечаем на турецком, английском и русском.',
+    directions: 'Открыть на карте',
     notFoundTitle: 'Страница не найдена',
     notFoundBody: 'Эта тропинка пока никуда не ведёт.',
     notFoundAction: 'На главную',

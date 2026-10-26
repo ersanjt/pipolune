@@ -24,6 +24,19 @@ export interface Session {
     catalogPreview: boolean;
     season: 'spring' | 'summer' | 'autumn' | 'winter';
     night: boolean;
+    /** Present after the shop-details API is deployed. Missing on an older server. */
+    store?: {
+      tradeName: string;
+      legalName: string;
+      phone: string;
+      phoneTel: string;
+      email: string;
+      lines: string[];
+      address: string;
+      taxNumber: string;
+      mersis: string;
+      mapsUrl: string;
+    };
   };
   country: string;
 }

@@ -4,6 +4,8 @@ import SiteHeader from '../../components/SiteHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
 import PageBand from '../../components/PageBand.astro';
 import { locales, ui, type Locale } from '../../i18n/ui';
+import { store, storeLines, storeMapsUrl } from '../../lib/store';
+import { breadcrumb, storeNode } from '../../lib/store-schema';
 
 export function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang } }));
@@ -12,9 +14,26 @@ export function getStaticPaths() {
 const lang = Astro.params.lang as Locale;
 const t = ui[lang];
 const path = 'about/';
+const site = Astro.site!;
+const jsonLd = [
+  storeNode(site.origin, t.aboutBody),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: t.aboutTitle,
+    url: new URL(`/${lang}/${path}`, site).href,
+    description: t.aboutBody,
+    inLanguage: lang,
+    mainEntity: { '@id': `${site.origin}/#shop` },
+  },
+  breadcrumb(site.origin, lang, [
+    { name: 'Pipolune', path: '' },
+    { name: t.aboutTitle, path },
+  ]),
+];
 ---
 
-<BaseLayout lang={lang} title={`${t.aboutTitle} — Pipolune`} description={t.aboutBody} path={path}>
+<BaseLayout lang={lang} title={`${t.aboutTitle} — Pipolune`} description={t.aboutBody} path={path} jsonLd={jsonLd} local>
   <a class="skip-link" href="#main">{t.skipLink}</a>
   <SiteHeader lang={lang} path={path} />
   <main id="main" class="container">
@@ -22,9 +41,14 @@ const path = 'about/';
     <div class="prose">
       <p>{t.aboutBody}</p>
       <p>{t.aboutMore}</p>
+      <address class="visit">
+        <span data-store-field="address" data-store-format="lines">{storeLines.join('\n')}</span>
+        <a data-store-field="phone" href={`tel:${store.phoneTel}`}>{store.phone}</a>
+        <a data-store-field="maps" href={storeMapsUrl} rel="noopener noreferrer">{t.directions}</a>
+      </address>
       <p data-sales-status data-open-text={t.statusOpenBody}>{t.statusBody}</p>
       <p>
-        {t.contactBody} <a href={`/${lang}/contact/`}>{t.contactTitle}</a>
+        <a href={`/${lang}/contact/`}>{t.contactTitle}</a>
       </p>
       <p><a href={`/${lang}/seasons/`}>{t.seasonsPageTitle}</a></p>
     </div>
@@ -54,5 +78,14 @@ const path = 'about/';
   .prose a {
     font-weight: 500;
     text-underline-offset: 4px;
+  }
+
+  .visit {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    font-style: normal;
+    line-height: 1.5;
+    white-space: pre-line;
   }
 </style>

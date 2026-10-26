@@ -1,5 +1,6 @@
 ---
 import { seller } from '../lib/seller';
+import { store } from '../lib/store';
 import { legal, type Locale } from '../i18n/legal';
 
 interface Props {
@@ -9,17 +10,17 @@ interface Props {
 const { lang } = Astro.props;
 const copy = legal[lang];
 const labels = copy.sellerLabels;
-const rows: { label: string; value: string; href?: string }[] = [
-  { label: labels.tradeName, value: seller.tradeName },
-  { label: labels.legalName, value: seller.legalName },
-  { label: labels.address, value: seller.address },
-  { label: labels.taxNumber, value: seller.taxNumber },
-  { label: labels.mersis, value: seller.mersis },
-  { label: labels.phone, value: seller.phone },
-  { label: labels.email, value: seller.email, href: `mailto:${seller.email}` },
-  { label: labels.website, value: seller.website, href: seller.website },
-  { label: labels.place, value: copy.place },
-].filter((row) => row.value.trim() !== '');
+const rows: { key: string; label: string; value: string; href?: string; live: boolean }[] = [
+  { key: 'tradeName', label: labels.tradeName, value: seller.tradeName, live: true },
+  { key: 'legalName', label: labels.legalName, value: seller.legalName, live: true },
+  { key: 'address', label: labels.address, value: seller.address, live: true },
+  { key: 'taxNumber', label: labels.taxNumber, value: seller.taxNumber, live: true },
+  { key: 'mersis', label: labels.mersis, value: seller.mersis, live: true },
+  { key: 'phone', label: labels.phone, value: seller.phone, href: `tel:${store.phoneTel}`, live: true },
+  { key: 'email', label: labels.email, value: seller.email, href: `mailto:${seller.email}`, live: true },
+  { key: 'website', label: labels.website, value: seller.website, href: seller.website, live: false },
+  { key: 'place', label: labels.place, value: copy.place, live: false },
+];
 const missing = [
   [labels.legalName, seller.legalName],
   [labels.address, seller.address],
@@ -37,13 +38,21 @@ const missing = [
     {
       rows.map((row) => (
         <>
-          <dt>{row.label}</dt>
-          <dd>{row.href ? <a href={row.href}>{row.value}</a> : row.value}</dd>
+          <dt data-store-label={row.key} hidden={row.value.trim() === ''}>{row.label}</dt>
+          <dd data-store-wrap={row.key} hidden={row.value.trim() === ''}>
+            {row.href && row.value.trim() !== '' ? (
+              <a href={row.href} data-store-field={row.live ? row.key : undefined}>{row.value}</a>
+            ) : (
+              <span data-store-field={row.live ? row.key : undefined}>{row.value}</span>
+            )}
+          </dd>
         </>
       ))
     }
   </dl>
-  {missing.length > 0 && <p>{copy.sellerPending.replace('{items}', missing.join(', '))}</p>}
+  {missing.length > 0 && (
+    <p data-store-pending data-template={copy.sellerPending}>{copy.sellerPending.replace('{items}', missing.join(', '))}</p>
+  )}
 </aside>
 
 <style>

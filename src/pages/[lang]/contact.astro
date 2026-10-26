@@ -4,6 +4,9 @@ import SiteHeader from '../../components/SiteHeader.astro';
 import SiteFooter from '../../components/SiteFooter.astro';
 import PageBand from '../../components/PageBand.astro';
 import { locales, ui, type Locale } from '../../i18n/ui';
+import { legal } from '../../i18n/legal';
+import { store, storeLines, storeMapsUrl } from '../../lib/store';
+import { breadcrumb, storeNode } from '../../lib/store-schema';
 
 export function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang } }));
@@ -11,16 +14,45 @@ export function getStaticPaths() {
 
 const lang = Astro.params.lang as Locale;
 const t = ui[lang];
+const labels = legal[lang].sellerLabels;
 const path = 'contact/';
+const site = Astro.site!;
+const jsonLd = [
+  storeNode(site.origin, t.contactMeta),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    name: t.contactTitle,
+    url: new URL(`/${lang}/${path}`, site).href,
+    description: t.contactMeta,
+    inLanguage: lang,
+    mainEntity: { '@id': `${site.origin}/#shop` },
+  },
+  breadcrumb(site.origin, lang, [
+    { name: 'Pipolune', path: '' },
+    { name: t.contactTitle, path },
+  ]),
+];
 ---
 
-<BaseLayout lang={lang} title={`${t.contactTitle} — Pipolune`} description={t.contactLead} path={path}>
+<BaseLayout lang={lang} title={`${t.contactTitle} — Pipolune, ${t.contactPlace}`} description={t.contactMeta} path={path} jsonLd={jsonLd} local>
   <a class="skip-link" href="#main">{t.skipLink}</a>
   <SiteHeader lang={lang} path={path} />
   <main id="main" class="container">
     <PageBand title={t.contactTitle} subtitle={t.contactLead} />
     <div class="prose">
-      <p><a href="mailto:info@pipolune.com">info@pipolune.com</a></p>
+      <address class="contact-card">
+        <p data-store-field="address" data-store-format="lines">{storeLines.join('\n')}</p>
+        <p>
+          <span class="contact-card__label">{labels.phone}</span>
+          <a data-store-field="phone" href={`tel:${store.phoneTel}`}>{store.phone}</a>
+        </p>
+        <p>
+          <span class="contact-card__label">{labels.email}</span>
+          <a data-store-field="email" href={`mailto:${store.email}`}>{store.email}</a>
+        </p>
+        <p><a data-store-field="maps" href={storeMapsUrl} rel="noopener noreferrer">{t.directions}</a></p>
+      </address>
       <p>{t.contactBody}</p>
     </div>
   </main>
@@ -33,6 +65,28 @@ const path = 'contact/';
     gap: var(--space-4);
     max-width: 72ch;
     padding-bottom: var(--space-8);
+  }
+
+  .contact-card {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    font-style: normal;
+  }
+
+  .contact-card p {
+    margin: 0;
+  }
+
+  .contact-card p:first-child {
+    white-space: pre-line;
+    line-height: 1.5;
+  }
+
+  .contact-card__label {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
   }
 
   .prose a {

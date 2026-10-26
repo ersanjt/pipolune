@@ -18,11 +18,13 @@ const t = ui[lang];
 const facets = catalogFacets(products);
 const label = (map: Record<string, string>, key: string) => map[key] ?? key;
 
+const audiences = [...new Set(['girl', 'boy', 'mother', 'unisex', ...facets.genders])];
+const categories = [...new Set([...facets.categories, 'accessory'])];
 const groups: { key: string; title: string; options: { value: string; label: string }[] }[] = [
   { key: 'age', title: s.filterAge, options: facets.ages.map((value) => ({ value, label: label(s.ages, value) })) },
   { key: 'size', title: s.size, options: facets.sizes.map((value) => ({ value, label: value })) },
-  { key: 'category', title: s.filterType, options: facets.categories.map((value) => ({ value, label: label(s.categories, value) })) },
-  { key: 'gender', title: s.filterGender, options: facets.genders.map((value) => ({ value, label: label(s.genders, value) })) },
+  { key: 'category', title: s.filterType, options: categories.map((value) => ({ value, label: label(s.categories, value) })) },
+  { key: 'gender', title: s.filterGender, options: audiences.map((value) => ({ value, label: label(s.genders, value) })) },
   { key: 'colour', title: s.colour, options: facets.colours.map((value) => ({ value, label: label(s.colours, value) })) },
 ];
 if (!lockSeason) {
@@ -147,7 +149,10 @@ const facetLabels = Object.fromEntries(visibleGroups.map((group) => [group.key, 
     function matches(card: HTMLElement, state: Record<string, string>) {
       if (state.season && card.dataset.season !== state.season && card.dataset.season !== 'all') return false;
       if (state.category && card.dataset.category !== state.category) return false;
-      if (state.gender && card.dataset.gender !== state.gender) return false;
+      if (state.gender && card.dataset.gender !== state.gender) {
+        const shared = (state.gender === 'girl' || state.gender === 'boy') && card.dataset.gender === 'unisex';
+        if (!shared) return false;
+      }
       if (state.age && card.dataset.age !== state.age) return false;
       if (state.size && !(card.dataset.sizes ?? '').split('|').includes(state.size)) return false;
       if (state.colour && !(card.dataset.colours ?? '').split('|').includes(state.colour)) return false;
@@ -200,8 +205,16 @@ const facetLabels = Object.fromEntries(visibleGroups.map((group) => [group.key, 
       chipRow.hidden = active === 0;
     }
 
+    const heading = document.querySelector<HTMLElement>('[data-band-title]');
+    const headingBase = heading?.textContent ?? '';
+    const titleBase = document.title;
+
     function apply(push: boolean) {
       const state = read();
+      const parts = [state.gender && labels.gender?.[state.gender], state.category && labels.category?.[state.category]].filter(Boolean);
+      const label = parts.join(' · ');
+      if (heading) heading.textContent = label || headingBase;
+      document.title = label ? `${label} — Pipolune` : titleBase;
       let shown = 0;
       for (const card of cards) {
         const ok = matches(card, state);

@@ -212,6 +212,9 @@ $router->patch('/studio/settings', static function () {
     if (array_intersect(['sales_mode', 'shipping_standard'], $sent) && !Perm::can($user, 'settings.sales')) {
         throw new ApiError(403, 'forbidden', 'Only an owner or store manager can change sales settings.');
     }
+    if (in_array('store', $sent, true) && !Perm::can($user, 'settings.content')) {
+        throw new ApiError(403, 'forbidden', 'You cannot change the shop details.');
+    }
     if ($in->has('season_mode')) {
         $values['season_mode'] = $in->oneOf('season_mode', ['auto', 'manual'], true);
     }
@@ -240,6 +243,9 @@ $router->patch('/studio/settings', static function () {
             }
             $values['shipping_standard'][$currency] = $value;
         }
+    }
+    if ($in->has('store')) {
+        $values['store'] = Settings::storeFrom(Http::body()['store'] ?? null, $in);
     }
     $in->check();
     Settings::set($values);

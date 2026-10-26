@@ -649,7 +649,14 @@ export function ProductEditor({ ctx, id }: { ctx: Ctx; id: number | null }) {
                 </label>
                 <label>
                   {t.category}
-                  <input value={product.category} onInput={(e) => set({ category: e.currentTarget.value.toLowerCase() })} placeholder="dress, jumpsuit, cardigan…" />
+                  <select value={product.category} onChange={(e) => set({ category: e.currentTarget.value })}>
+                    <option value="">{t.categoryUnset}</option>
+                    {product.category && !t.categories[product.category] && <option value={product.category}>{product.category}</option>}
+                    {Object.entries(t.categories).map(([k, v]) => (
+                      <option value={k}>{v}</option>
+                    ))}
+                  </select>
+                  <span class="s-muted">{t.categoryHelp}</span>
                 </label>
                 <label>
                   {t.gender}

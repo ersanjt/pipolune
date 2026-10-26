@@ -3,6 +3,7 @@ import { api, ApiError } from '../../lib/api';
 import { can, dateTime, ErrorNote, Loading, PageHead, Panel, STAFF_ROLES, useApi, type Ctx } from '../shared';
 import { useSettings } from './Content';
 import { currencies, currencySymbol, type Currency } from '../../lib/currency';
+import { store as fallbackStore } from '../../lib/store';
 
 export function PublishButton({ ctx }: { ctx: Ctx }) {
   const { t } = ctx;
@@ -101,10 +102,101 @@ export default function Settings({ ctx }: { ctx: Ctx }) {
         </Panel>
       </div>
 
+      {can(ctx.me, 'settings.content') && <StorePanel ctx={ctx} saved={s.store} patch={patch} />}
+
       {can(ctx.me, 'staff') && <StaffPanel ctx={ctx} />}
     </>
   );
 }
+
+function StorePanel({
+  ctx,
+  saved,
+  patch,
+}: {
+  ctx: Ctx;
+  saved: SettingsResponseStore | undefined;
+  patch: (values: { store: StoreForm }) => Promise<void> | void;
+}) {
+  const { t } = ctx;
+  const initial = {
+    tradeName: saved?.tradeName ?? fallbackStore.tradeName,
+    legalName: saved?.legalName ?? '',
+    phone: saved?.phone ?? fallbackStore.phone,
+    email: saved?.email ?? fallbackStore.email,
+    line1: saved?.line1 ?? fallbackStore.line1,
+    line2: saved?.line2 ?? fallbackStore.line2,
+    postalCode: saved?.postalCode ?? fallbackStore.postalCode,
+    district: saved?.district ?? fallbackStore.district,
+    city: saved?.city ?? fallbackStore.city,
+    country: saved?.country ?? fallbackStore.country,
+    taxNumber: saved?.taxNumber ?? '',
+    mersis: saved?.mersis ?? '',
+  };
+  const [form, setForm] = useState(initial);
+  const set = (key: keyof StoreForm, value: string) => setForm({ ...form, [key]: value });
+  const fields: { key: keyof StoreForm; label: string; type?: string }[] = [
+    { key: 'tradeName', label: t.storeTrade },
+    { key: 'legalName', label: t.storeLegal },
+    { key: 'phone', label: t.storePhone, type: 'tel' },
+    { key: 'email', label: t.storeEmail, type: 'email' },
+    { key: 'line1', label: t.storeLine1 },
+    { key: 'line2', label: t.storeLine2 },
+    { key: 'postalCode', label: t.storePostal },
+    { key: 'district', label: t.storeDistrict },
+    { key: 'city', label: t.storeCity },
+    { key: 'country', label: t.storeCountry },
+    { key: 'taxNumber', label: t.storeTax },
+    { key: 'mersis', label: t.storeMersis },
+  ];
+
+  return (
+    <Panel title={t.storeProfile}>
+      <form
+        class="s-stack"
+        onSubmit={(e) => {
+          e.preventDefault();
+          patch({ store: form });
+        }}
+      >
+        <div class="s-grid s-grid--2">
+          {fields.map((field) => (
+            <label>
+              {field.label}
+              <input
+                type={field.type ?? 'text'}
+                maxLength={190}
+                value={form[field.key]}
+                required={field.key === 'tradeName'}
+                onInput={(e) => set(field.key, e.currentTarget.value)}
+              />
+            </label>
+          ))}
+        </div>
+        <p class="s-muted">{t.storeHelp}</p>
+        <button class="s-btn" type="submit">
+          {t.save}
+        </button>
+      </form>
+    </Panel>
+  );
+}
+
+type StoreForm = {
+  tradeName: string;
+  legalName: string;
+  phone: string;
+  email: string;
+  line1: string;
+  line2: string;
+  postalCode: string;
+  district: string;
+  city: string;
+  country: string;
+  taxNumber: string;
+  mersis: string;
+};
+type SettingsResponseStore = StoreForm;
 
 function StaffPanel({ ctx }: { ctx: Ctx }) {
   const { t, lang } = ctx;

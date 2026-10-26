@@ -6,6 +6,7 @@ import Icon from '../../components/Icon.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import { locales, ui, type Locale, type SeasonKey } from '../../i18n/ui';
 import { loadCatalog } from '../../lib/catalog';
+import { storeNode } from '../../lib/store-schema';
 
 export function getStaticPaths() {
   return locales.map((lang) => ({ params: { lang } }));
@@ -19,26 +20,19 @@ const site = Astro.site!;
 const seasons: SeasonKey[] = ['spring', 'summer', 'autumn', 'winter'];
 const products = (await loadCatalog()).slice(0, 3);
 const jsonLd = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Pipolune',
-    url: site.href,
-    logo: new URL('/brand/icon-512.png', site).href,
-    email: 'info@pipolune.com',
-    areaServed: 'TR',
-  },
+  storeNode(site.origin, t.metaDescription),
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Pipolune',
     url: new URL(`/${lang}/`, site).href,
-    inLanguage: lang,
+    inLanguage: ['tr', 'en', 'ru'],
+    publisher: { '@id': `${site.origin}/#shop` },
   },
 ];
 ---
 
-<BaseLayout lang={lang} title={t.metaTitle} description={t.metaDescription} jsonLd={jsonLd}>
+<BaseLayout lang={lang} title={t.metaTitle} description={t.metaDescription} jsonLd={jsonLd} local>
   <a class="skip-link" href="#main">{t.skipLink}</a>
   <SiteHeader lang={lang} />
 

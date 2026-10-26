@@ -30,7 +30,8 @@ const { title, subtitle } = Astro.props;
   .band__text {
     position: relative;
     z-index: 1;
-    padding: var(--space-4) 0;
+    max-width: 40rem;
+    padding: var(--space-5) 34% var(--space-5) 0;
   }
 
   .band h1 {
@@ -41,6 +42,7 @@ const { title, subtitle } = Astro.props;
   .band__sub {
     margin-top: var(--space-1);
     font-size: 1.0625rem;
+    line-height: 1.45;
     color: var(--color-text-muted);
   }
 
@@ -56,9 +58,13 @@ const { title, subtitle } = Astro.props;
   }
 
   @media (max-width: 599px) {
+    .band__text {
+      padding-right: 50%;
+    }
+
     .band__art {
-      width: 55%;
-      opacity: 0.55;
+      width: 42%;
+      opacity: 0.5;
     }
   }
 </style>
