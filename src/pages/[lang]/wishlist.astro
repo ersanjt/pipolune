@@ -1,0 +1,146 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import PageBand from '../../components/PageBand.astro';
+import Price from '../../components/Price.astro';
+import { locales, ui, type Locale } from '../../i18n/ui';
+import { shop } from '../../i18n/shop';
+import { loadCatalog, text } from '../../lib/catalog';
+
+export function getStaticPaths() {
+  return locales.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as Locale;
+const t = ui[lang];
+const s = shop[lang];
+const products = await loadCatalog();
+---
+
+<BaseLayout lang={lang} title={`${s.wishlistTitle} — Pipolune`} description={s.wishlistEmptyLead} path="wishlist/">
+  <a class="skip-link" href="#main">{t.skipLink}</a>
+  <SiteHeader lang={lang} path="wishlist/" />
+  <main id="main" class="container">
+    <PageBand title={s.wishlistTitle}>
+      <p class="wish-count" data-wish-heading data-template={s.wishlistSaved} hidden></p>
+    </PageBand>
+    <div class="wish-empty" data-wish-empty>
+      <p>{s.wishlistEmptyLead}</p>
+      <p><a href={`/${lang}/shop/`}>{s.continueShopping}</a></p>
+    </div>
+    <ul class="wish-list">
+      {
+        products.map((product) => {
+          const copy = text(product, lang);
+          const colours = [...new Set(product.variants.map((variant) => variant.colour).filter(Boolean))];
+          const colourLabel = colours.map((colour) => s.colours[colour] ?? colour).join(', ');
+          return (
+            <li data-wish-row data-wish-slug={product.slug} data-wish-id={product.id ?? ''} hidden>
+              <a href={`/${lang}/shop/${product.slug}/`}>
+                <img src={product.image} alt="" width="160" height="160" />
+              </a>
+              <div>
+                <h2><a href={`/${lang}/shop/${product.slug}/`}>{copy.name}</a></h2>
+                <p class="wish-price"><Price prices={product.prices} lang={lang} /></p>
+                {colourLabel && <p class="wish-colour">{s.colour}: {colourLabel}</p>}
+                <div class="wish-actions">
+                  <a class="btn btn--primary" href={`/${lang}/shop/${product.slug}/`}>{s.addToBag}</a>
+                  <button class="icon-toggle" type="button" data-save={product.slug} data-save-id={product.id ?? ''} data-label-on={s.wishlistRemove} data-label-off={s.wishlistAdd} aria-pressed="true">
+                    <span class="visually-hidden">{s.wishlistRemove}</span>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                      <path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.4 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </main>
+  <SiteFooter lang={lang} />
+</BaseLayout>
+
+<style>
+  .wish-count {
+    margin-top: var(--space-2);
+    color: var(--color-text-muted);
+  }
+
+  .wish-empty {
+    display: grid;
+    gap: var(--space-3);
+    max-width: 42ch;
+  }
+
+  .wish-empty a {
+    text-underline-offset: 3px;
+  }
+
+  .wish-empty[hidden],
+  .wish-list li[hidden] {
+    display: none;
+  }
+
+  .wish-list {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .wish-list li {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    gap: var(--space-4);
+    align-items: center;
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .wish-list img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: var(--color-photo);
+  }
+
+  .wish-list h2 {
+    font-family: var(--font-text);
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  .wish-list h2 a {
+    text-decoration: none;
+  }
+
+  .wish-price {
+    margin-top: var(--space-1);
+  }
+
+  .wish-colour {
+    margin-top: var(--space-1);
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+  }
+
+  .wish-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+    margin-top: var(--space-3);
+  }
+
+  @media (min-width: 900px) {
+    .wish-list li {
+      grid-template-columns: 160px 1fr;
+    }
+  }
+</style>

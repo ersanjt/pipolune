@@ -19,6 +19,7 @@ export const GET: APIRoute = async ({ site }) => {
     'about/',
     'contact/',
     'size-guide/',
+    'wishlist/',
     'legal/',
     ...legalSlugs.map((slug) => `legal/${slug}/`),
     ...products.filter((p) => p.translations.en).map((p) => `shop/${p.slug}/`),

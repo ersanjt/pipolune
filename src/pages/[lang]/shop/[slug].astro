@@ -35,6 +35,8 @@ const jsonLd = [
     name: copy.name,
     description: copy.description || copy.subtitle,
     image: gallery.map((src) => new URL(src, site).href),
+    url: new URL(`/${lang}/${path}`, site).href,
+    inLanguage: lang,
     brand: { '@type': 'Brand', name: 'Pipolune' },
     sku: product.variants[0]?.sku,
   },
@@ -64,13 +66,40 @@ const jsonLd = [
       <div class="product__info">
         <h1>{copy.name}</h1>
         <p class="product__subtitle">{copy.subtitle}</p>
-        <ProductBuy client:load lang={lang} slug={product.slug} prices={product.prices} variants={product.variants} />
-        {copy.description && <p class="product__description">{copy.description}</p>}
-        <p class="product__policies">
-          <a href={`/${lang}/legal/delivery/`}>{legal[lang].documents.delivery.title}</a>
-          <span aria-hidden="true">·</span>
-          <a href={`/${lang}/legal/returns/`}>{legal[lang].documents.returns.title}</a>
+        <p class="product__collection">
+          {s.collection}: <a href={product.season === 'all' ? `/${lang}/seasons/` : `/${lang}/seasons/${product.season}/`}>{product.season === 'all' ? s.seasonAll : t.seasons[product.season]}</a>
         </p>
+        <ProductBuy client:load lang={lang} slug={product.slug} prices={product.prices} variants={product.variants} sizeGuideHref={chart ? '#size-title' : `/${lang}/size-guide/`} />
+        <div class="folds">
+          {copy.description && (
+            <details class="fold">
+              <summary>{s.description}</summary>
+              <p>{copy.description}</p>
+            </details>
+          )}
+          {specs.length > 0 && (
+            <details class="fold">
+              <summary>{s.compositionCare}</summary>
+              <dl class="spec-list">
+                {specs.map((row) => (
+                  <div>
+                    <dt>{row.label}</dt>
+                    <dd>{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
+          )}
+          <details class="fold">
+            <summary>{s.deliveryTitle}</summary>
+            <p>{s.deliveryNote}</p>
+            <p class="product__policies">
+              <a href={`/${lang}/legal/delivery/`}>{legal[lang].documents.delivery.title}</a>
+              <span aria-hidden="true">·</span>
+              <a href={`/${lang}/legal/returns/`}>{legal[lang].documents.returns.title}</a>
+            </p>
+          </details>
+        </div>
         <p class="product__note"><span aria-hidden="true">✦</span> {t.previewNote}</p>
       </div>
     </article>
@@ -95,23 +124,9 @@ const jsonLd = [
     }
 
     {
-      (specs.length > 0 || chart) && (
+      chart && (
         <div class="product-facts">
-          {specs.length > 0 && (
-            <section class="product-section" aria-labelledby="specs-title">
-              <h2 id="specs-title" class="product-section__title">{s.specsTitle}</h2>
-              <dl class="spec-list">
-                {specs.map((row) => (
-                  <div>
-                    <dt>{row.label}</dt>
-                    <dd>{row.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          )}
-          {chart && (
-            <section class="product-section" aria-labelledby="size-title">
+          <section class="product-section" aria-labelledby="size-title">
               <h2 id="size-title" class="product-section__title">{s.sizeGuide}</h2>
               <div class="size-table">
                 <table>
@@ -129,7 +144,6 @@ const jsonLd = [
               </div>
               {chartNote && <p class="size-note">{chartNote}</p>}
             </section>
-          )}
         </div>
       )
     }
@@ -170,6 +184,52 @@ const jsonLd = [
     margin-top: calc(var(--space-3) * -1);
     font-size: 1.125rem;
     color: var(--color-text-muted);
+  }
+
+  .product__collection {
+    font-size: 0.9375rem;
+  }
+
+  .product__collection a {
+    text-underline-offset: 3px;
+  }
+
+  .folds {
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .fold {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .fold summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 48px;
+    font-size: 1.0625rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .fold summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .fold summary::after {
+    content: '+';
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .fold[open] summary::after {
+    content: '–';
+  }
+
+  .fold p,
+  .fold .spec-list {
+    padding-bottom: var(--space-4);
   }
 
   .product__description {

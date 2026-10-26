@@ -2,6 +2,7 @@
 import Icon from './Icon.astro';
 import Price from './Price.astro';
 import { text, type CatalogProduct } from '../lib/catalog';
+import { shop } from '../i18n/shop';
 import type { Locale } from '../i18n/ui';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 
 const { product, lang, showPrice = true, order = 0 } = Astro.props;
 const copy = text(product, lang);
+const s = shop[lang];
 const sizes = [...new Set(product.variants.map((v) => v.size).filter(Boolean))];
 const colours = [...new Set(product.variants.map((v) => v.colour).filter(Boolean))];
 ---
@@ -30,6 +32,12 @@ const colours = [...new Set(product.variants.map((v) => v.colour).filter(Boolean
   data-name={copy.name}
   data-price={product.prices.TRY}
 >
+  <button class="product-card__save" type="button" data-save={product.slug} data-save-id={product.id ?? ''} data-label-on={s.wishlistRemove} data-label-off={s.wishlistAdd} aria-pressed="false">
+    <span class="visually-hidden">{s.wishlistAdd}</span>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+      <path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.4 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z" />
+    </svg>
+  </button>
   <a href={`/${lang}/shop/${product.slug}/`}>
     <div class="product-card__photo">
       <img src={product.image} alt={copy.name} width="279" height="221" loading="lazy" />
@@ -38,6 +46,17 @@ const colours = [...new Set(product.variants.map((v) => v.colour).filter(Boolean
       <div>
         <h3>{copy.name}</h3>
         <p>{copy.subtitle}</p>
+        {
+          colours.length > 0 && (
+            <ul class="product-card__colours" aria-label={s.colour}>
+              {colours.map((colour) => (
+                <li class="pl-swatch" data-colour={colour} title={s.colours[colour] ?? colour}>
+                  <span class="visually-hidden">{s.colours[colour] ?? colour}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
         {showPrice && <p class="product-card__price"><Price prices={product.prices} lang={lang} /></p>}
       </div>
       <span class="product-card__arrow" aria-hidden="true"><Icon name="arrow" size={16} /></span>
@@ -47,10 +66,52 @@ const colours = [...new Set(product.variants.map((v) => v.colour).filter(Boolean
 
 <style>
   .product-card {
+    position: relative;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-sm);
     overflow: hidden;
     background: var(--color-surface);
+  }
+
+  .product-card__save {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: var(--color-forest);
+    background: rgb(251 248 241 / 0.92);
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .product-card__save svg {
+    fill: none;
+  }
+
+  .product-card__save[aria-pressed='true'] svg {
+    fill: currentColor;
+  }
+
+  .product-card__colours {
+    display: flex;
+    gap: 6px;
+    margin-top: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .product-card__colours .pl-swatch {
+    width: 12px;
+    height: 12px;
+    border: 1px solid rgb(32 61 43 / 0.25);
+    border-radius: 50%;
   }
 
   .product-card[hidden] {

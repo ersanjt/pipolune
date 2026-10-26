@@ -5,6 +5,7 @@ import { currentCurrency, defaultCurrency, type Currency, type Prices } from '..
 import { getSession, onSession, updateSession, type Session } from '../lib/session';
 import { errorText, shop } from '../i18n/shop';
 import type { Locale } from '../i18n/ui';
+import { isSaved, toggleGuest, toggleSaved } from '../lib/wishlist';
 import { Button, Notice } from './ui';
 import EnquiryForm from './EnquiryForm';
 
@@ -22,8 +23,8 @@ interface Live {
   variants: Required<Pick<Variant, 'id' | 'sku' | 'colour' | 'size' | 'available'>>[] & Variant[];
 }
 
-/** Size choice, add to bag, wishlist and enquiry on the product page. Static HTML shows the price before this loads. */
-export default function ProductBuy(props: { lang: Locale; slug: string; prices: Prices; variants: Variant[] }) {
+/** Colour, size, add to bag, wishlist and enquiry. Static HTML shows the price before this loads. */
+export default function ProductBuy(props: { lang: Locale; slug: string; prices: Prices; variants: Variant[]; sizeGuideHref: string }) {
   const t = shop[props.lang];
   const [live, setLive] = useState<Live | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -32,19 +33,31 @@ export default function ProductBuy(props: { lang: Locale; slug: string; prices: 
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
   const [asking, setAsking] = useState(false);
   const [currency, setCurrency] = useState<Currency>(defaultCurrency[props.lang]);
+  const [colour, setColour] = useState(props.variants.find((v) => v.colour)?.colour ?? '');
+  const [guestSaved, setGuestSaved] = useState(false);
 
   useEffect(() => {
     setCurrency(currentCurrency(props.lang));
     api<Live>(`/catalog/${props.slug}?locale=${props.lang}`).then(setLive).catch(() => setLive(null));
     getSession().then(setSession).catch(() => {});
-    return onSession(setSession);
+    const syncGuest = () => setGuestSaved(isSaved(props.slug, null, null));
+    syncGuest();
+    window.addEventListener('pl:wishlist', syncGuest);
+    return () => {
+      window.removeEventListener('pl:wishlist', syncGuest);
+    };
   }, []);
 
+  useEffect(() => onSession(setSession), []);
+
   const variants: Variant[] = live?.variants ?? props.variants;
-  const chosen = variants.find((v) => v.id === selected);
+  const colours = [...new Set(variants.map((v) => v.colour).filter(Boolean))];
+  const activeColour = colours.includes(colour) ? colour : (colours[0] ?? '');
+  const sizes = variants.filter((v) => !activeColour || v.colour === activeColour);
+  const chosen = sizes.find((v) => v.id === selected);
   const price = (live?.prices ?? props.prices)[currency];
-  const soldOut = !!live && variants.every((v) => v.available === false);
-  const inWishlist = !!live && !!session?.wishlist.includes(live.id);
+  const soldOut = !!live && sizes.every((v) => v.available === false);
+  const inWishlist = session?.user && live ? session.wishlist.includes(live.id) : guestSaved;
 
   async function addToBag() {
     if (!chosen?.id) {
@@ -65,25 +78,51 @@ export default function ProductBuy(props: { lang: Locale; slug: string; prices: 
   }
 
   async function toggleWishlist() {
-    if (!live) return;
-    if (!session?.user) {
-      location.href = `/${props.lang}/account/sign-in/?next=${encodeURIComponent(location.pathname)}`;
+    if (session?.user) {
+      if (!live) return;
+      await toggleSaved(props.slug, live.id);
       return;
     }
-    const res = inWishlist
-      ? await api<{ ids: number[] }>(`/account/wishlist/${live.id}`, { method: 'DELETE' })
-      : await api<{ ids: number[] }>('/account/wishlist', { method: 'POST', body: { productId: live.id } });
-    updateSession({ wishlist: res.ids });
+    toggleGuest(props.slug);
   }
 
   return (
     <div class="product-buy">
       <p class="product-buy__price">{money(price, props.lang, currency)}</p>
 
+      {colours.length > 0 && (
+        <fieldset class="colour-picker">
+          <legend>{t.colour}</legend>
+          <div class="colour-picker__options">
+            {colours.map((name) => (
+              <button
+                type="button"
+                class="colour-swatch pl-swatch"
+                data-colour={name}
+                aria-pressed={activeColour === name}
+                title={t.colours[name] ?? name}
+                onClick={() => {
+                  setColour(name);
+                  setSelected(null);
+                  setMessage(null);
+                }}
+              >
+                <span class="visually-hidden">{t.colours[name] ?? name}</span>
+              </button>
+            ))}
+          </div>
+          <p class="colour-picker__name">{t.colours[activeColour] ?? activeColour}</p>
+        </fieldset>
+      )}
+
       <fieldset class="size-picker">
-        <legend>{t.size}</legend>
+        <legend class="visually-hidden">{t.size}</legend>
+        <div class="size-picker__head">
+          <span>{t.size}</span>
+          <a href={props.sizeGuideHref}>{t.sizeGuide}</a>
+        </div>
         <div class="size-picker__options">
-          {variants.map((v) => {
+          {sizes.map((v) => {
             const disabled = !v.id || v.available === false;
             return (
               <button
@@ -103,11 +142,6 @@ export default function ProductBuy(props: { lang: Locale; slug: string; prices: 
             );
           })}
         </div>
-        {chosen && (
-          <p class="size-picker__colour">
-            {t.colour}: {chosen.colour}
-          </p>
-        )}
       </fieldset>
 
       <div class="product-buy__actions">
@@ -119,8 +153,7 @@ export default function ProductBuy(props: { lang: Locale; slug: string; prices: 
           class="icon-toggle"
           aria-pressed={inWishlist}
           onClick={toggleWishlist}
-          disabled={!live}
-          title={session?.user ? (inWishlist ? t.wishlistRemove : t.wishlistAdd) : t.wishlistSignIn}
+          title={inWishlist ? t.wishlistRemove : t.wishlistAdd}
         >
           <span class="visually-hidden">{inWishlist ? t.wishlistRemove : t.wishlistAdd}</span>
           <svg width="22" height="22" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="1.4" aria-hidden="true">
